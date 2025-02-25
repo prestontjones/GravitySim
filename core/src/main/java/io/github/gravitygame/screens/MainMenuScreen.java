@@ -1,4 +1,4 @@
-package io.github.some_example_name.screens;
+package io.github.gravitygame.screens;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;

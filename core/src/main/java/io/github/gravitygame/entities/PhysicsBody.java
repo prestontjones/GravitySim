@@ -1,4 +1,4 @@
-package io.github.some_example_name.Entities;
+package io.github.gravitygame.entities;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
