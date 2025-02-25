@@ -9,7 +9,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
-import io.github.some_example_name.Main;
+import io.github.gravitygame.Main;
 
 public class MainMenuScreen implements Screen {
     private final Main main;
@@ -86,7 +86,9 @@ public class MainMenuScreen implements Screen {
     public void resume() {}
 
     @Override
-    public void hide() {}
+    public void hide() {
+        Gdx.input.setInputProcessor(null); // Clear the input processor
+    }
 
     @Override
     public void dispose() {

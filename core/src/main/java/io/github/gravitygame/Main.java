@@ -1,9 +1,9 @@
-package io.github.some_example_name;
+package io.github.gravitygame;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
-import io.github.some_example_name.screens.MainMenuScreen;
+import io.github.gravitygame.screens.MainMenuScreen;
 
 
 

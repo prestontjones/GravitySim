@@ -2,21 +2,29 @@ package io.github.gravitygame.screens;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.World;
-import io.github.gravitygame.entities.PhysicsBody;
-import io.github.gravitygame.physics.PhysicsWorld;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Slider;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
+
 import io.github.gravitygame.Main;
+import io.github.gravitygame.entities.PhysicsBody;
+import io.github.gravitygame.managers.SimulationManager;
+import io.github.gravitygame.utils.CameraController;
 
 public class GameScreen implements Screen {
     private final Main main;
     private ShapeRenderer shapeRenderer;
-    private PhysicsWorld physicsWorld;
-    private PhysicsBody planet;
-    private PhysicsBody[] moons;
+    private OrthographicCamera camera;
+    private CameraController cameraController;
+    private Stage stage;
+    private Skin skin;
+    private SimulationManager simulationManager;
 
     public GameScreen(Main main) {
         this.main = main;
@@ -24,46 +32,81 @@ public class GameScreen implements Screen {
 
     @Override
     public void show() {
+        // Initialize rendering tools
         shapeRenderer = new ShapeRenderer();
-        physicsWorld = new PhysicsWorld();
+        camera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
-        // Create the planet
-        planet = new PhysicsBody(physicsWorld.getWorld(), 400, 300, 50, Color.BLUE);
+        // Initialize camera controller
+        cameraController = new CameraController(camera);
+        Gdx.input.setInputProcessor(cameraController);
 
-        // Create the moons
-        moons = new PhysicsBody[3];
-        for (int i = 0; i < moons.length; i++) {
-            float angle = (float) (i * 2 * Math.PI / moons.length);
-            float x = (float) (400 + 150 * Math.cos(angle));
-            float y = (float) (300 + 150 * Math.sin(angle));
-            moons[i] = new PhysicsBody(physicsWorld.getWorld(), x, y, 20, Color.RED);
+        // Initialize UI
+        stage = new Stage(new ScreenViewport());
+        skin = new Skin(Gdx.files.internal("skin/neon-ui.json"));
 
-            // Set initial velocity for orbiting
-            float speed = 5;
-            float vx = (float) (speed * Math.cos(angle + Math.PI / 2));
-            float vy = (float) (speed * Math.sin(angle + Math.PI / 2));
-            moons[i].getBody().setLinearVelocity(vx, vy);
-        }
+        // Create UI table
+        Table table = new Table();
+        table.setFillParent(true);
+        stage.addActor(table);
+
+        // Add UI elements
+        TextButton pauseButton = new TextButton("Pause", skin);
+        Slider timestepSlider = new Slider(0.1f, 2f, 0.01f, false, skin);
+        timestepSlider.setValue(1f); // Default timestep
+
+        // Add button and slider to the table
+        table.add(pauseButton).width(100).height(50).padBottom(10).top().left();
+        table.row();
+        table.add(timestepSlider).width(200).height(20).padBottom(10).top().left();
+
+        // Add button listener
+        pauseButton.addListener(event -> {
+            if (event.isHandled()) {
+                simulationManager.togglePause();
+                pauseButton.setText(simulationManager.isPaused() ? "Resume" : "Pause");
+            }
+            return true;
+        });
+
+        // Add slider listener
+        timestepSlider.addListener(event -> {
+            if (event.isHandled()) {
+                simulationManager.setTimestepScale(timestepSlider.getValue());
+            }
+            return true;
+        });
+
+        // Initialize simulation manager
+        simulationManager = new SimulationManager();
     }
 
     @Override
     public void render(float delta) {
+        // Clear the screen
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // Update physics
-        physicsWorld.update(delta);
+        // Update simulation
+        simulationManager.update(delta);
 
-        // Draw bodies
+        // Render simulation
+        shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        planet.render(shapeRenderer);
-        for (PhysicsBody moon : moons) {
-            moon.render(shapeRenderer);
+        for (PhysicsBody body : simulationManager.getBodies()) {
+            body.render(shapeRenderer);
         }
         shapeRenderer.end();
+
+        // Render UI
+        stage.act(delta);
+        stage.draw();
     }
 
     @Override
-    public void resize(int width, int height) {}
+    public void resize(int width, int height) {
+        camera.setToOrtho(false, width, height);
+        stage.getViewport().update(width, height, true);
+    }
 
     @Override
     public void pause() {}
@@ -72,11 +115,15 @@ public class GameScreen implements Screen {
     public void resume() {}
 
     @Override
-    public void hide() {}
+    public void hide() {
+        Gdx.input.setInputProcessor(null); // Clear input processor
+    }
 
     @Override
     public void dispose() {
         shapeRenderer.dispose();
-        physicsWorld.dispose();
+        stage.dispose();
+        skin.dispose();
+        simulationManager.dispose();
     }
 }
