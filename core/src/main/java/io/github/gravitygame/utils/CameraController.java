@@ -1,5 +1,6 @@
 package io.github.gravitygame.utils;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector3;
@@ -42,6 +43,10 @@ public class CameraController implements InputProcessor {
     @Override
     public boolean touchCancelled(int screenX, int screenY, int pointer, int button) {
         return false;
+    }
+    public boolean isInputOverUI(int screenX, int screenY) {
+        // Check if the input is over the UI (e.g., buttons, sliders)
+        return screenX > Gdx.graphics.getWidth() - 220 && screenY > Gdx.graphics.getHeight() - 100;
     }
 
     // Unused InputProcessor methods
