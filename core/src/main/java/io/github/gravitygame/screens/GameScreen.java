@@ -17,7 +17,9 @@ import io.github.gravitygame.managers.SimulationManager;
 import io.github.gravitygame.managers.StarsManager;
 import io.github.gravitygame.managers.UICreationManager;
 import io.github.gravitygame.utils.CameraController;
+import io.github.gravitygame.utils.CameraController.CameraMode;
 import io.github.gravitygame.utils.GameRenderer;
+
 
 public class GameScreen implements Screen {
     private final Main main;
@@ -43,7 +45,7 @@ public class GameScreen implements Screen {
         cameraController = new CameraController(camera);
 
         Stage stage = new Stage(new ScreenViewport());
-        uiManager = new UICreationManager(stage, simulationManager, bodyCreator);
+        uiManager = new UICreationManager(stage, simulationManager, bodyCreator, cameraController);
         uiManager.setupUI();
 
         StarsManager starfield = new StarsManager(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), 200);
@@ -64,6 +66,12 @@ public class GameScreen implements Screen {
         camera.unproject(mousePos);
         bodyCreator.updateInput(new Vector2(mousePos.x, mousePos.y));
 
+        if (cameraController.getMode() == CameraMode.FOLLOW) {
+        Vector2 com = simulationManager.getCenterOfMass();
+        cameraController.setFollowTarget(com);
+        }  
+
+        cameraController.update(delta);
         simulationManager.update(delta);
         bodyCreator.update();
         predictionManager.update(delta);

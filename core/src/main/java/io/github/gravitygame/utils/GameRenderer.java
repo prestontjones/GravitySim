@@ -60,6 +60,11 @@ public class GameRenderer {
         if (uiManager.isPredictionsEnabled()) {
             renderPredictionPaths();
         }
+
+        // Render body preview if a body is being created
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        bodyCreator.renderPreview();
+        shapeRenderer.end();
     }
 
     private void renderPredictionPaths() {

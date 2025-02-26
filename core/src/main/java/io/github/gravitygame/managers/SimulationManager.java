@@ -9,6 +9,7 @@ import com.badlogic.gdx.physics.box2d.World;
 
 import io.github.gravitygame.entities.PhysicsBody;
 import io.github.gravitygame.physics.GravityManager;
+import io.github.gravitygame.utils.CameraController;
 
 public class SimulationManager {
     private final World world;
@@ -32,10 +33,33 @@ public class SimulationManager {
         }
     }
 
+    public void addBody(float x, float y, float radius, Vector2 velocity) {
+        System.out.println("[DEBUG] Adding body at (" + x + "," + y + ")");
+        PhysicsBody newBody = new PhysicsBody(world, x, y, radius, calculateMass(radius), Color.GRAY);
+        newBody.getBody().setLinearVelocity(velocity);
+        bodies.add(newBody);
+    }
+
+    public Vector2 getCenterOfMass() {
+        Vector2 com = new Vector2();
+        float totalMass = 0f;
+        
+        for (PhysicsBody body : bodies) {
+            float mass = body.getMass();
+            com.x += body.getBody().getPosition().x * mass;
+            com.y += body.getBody().getPosition().y * mass;
+            totalMass += mass;
+        }
+        
+        if (totalMass > 0) {
+            com.scl(1f / totalMass);
+        }
+        return com;
+    }
+
     public void togglePause() {
         isPaused = !isPaused;
     }
-
     public boolean isPaused() {
         return isPaused;
     }
@@ -57,13 +81,6 @@ public class SimulationManager {
         return world;
     }
 
-    public void addBody(float x, float y, float radius, Vector2 velocity) {
-        System.out.println("[DEBUG] Adding body at (" + x + "," + y + ")");
-        PhysicsBody newBody = new PhysicsBody(world, x, y, radius, calculateMass(radius), Color.GRAY);
-        newBody.getBody().setLinearVelocity(velocity);
-        bodies.add(newBody);
-    }
-
     private float calculateMass(float radius) {
         // Example: Mass proportional to area
         return (float) (Math.PI * radius * radius);
@@ -75,5 +92,10 @@ public class SimulationManager {
 
     public void dispose() {
         world.dispose();
+    }
+
+    public CameraController getCameraController() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getCameraController'");
     }
 }
