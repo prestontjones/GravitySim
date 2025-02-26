@@ -15,6 +15,7 @@ public class Main extends Game {
     public void create() {
         batch = new SpriteBatch();
         setScreen(new MainMenuScreen(this)); // Start with the main menu screen
+        System.out.println("[DEBUG] Loading Main Menu Screen");
     }
 
     @Override

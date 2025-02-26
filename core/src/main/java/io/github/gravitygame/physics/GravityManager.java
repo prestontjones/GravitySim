@@ -8,7 +8,7 @@ import com.badlogic.gdx.physics.box2d.Body;
 import io.github.gravitygame.entities.PhysicsBody;
 
 public class GravityManager {
-    private static final float GRAVITATIONAL_CONSTANT = 0.0001f; // Adjust as needed
+    private static final float GRAVITATIONAL_CONSTANT = 100f; // Adjust as needed
 
     public static void updateGravity(List<PhysicsBody> bodies) {
         for (int i = 0; i < bodies.size(); i++) {

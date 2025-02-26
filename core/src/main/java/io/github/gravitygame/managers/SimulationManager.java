@@ -15,6 +15,7 @@ public class SimulationManager {
     private final List<PhysicsBody> bodies;
     private boolean isPaused = false;
     private float timestepScale = 1f;
+    private boolean predictionsEnabled = false;
 
     public SimulationManager() {
         this.world = new World(new Vector2(0, 0), true); // No global gravity
@@ -38,7 +39,12 @@ public class SimulationManager {
     public boolean isPaused() {
         return isPaused;
     }
-
+    public void setPredictionsEnabled(boolean enabled) {
+        this.predictionsEnabled = enabled;
+    }
+    public boolean isPredictionsEnabled() {
+        return predictionsEnabled;
+    }
     public void setTimestepScale(float scale) {
         this.timestepScale = scale;
     }
@@ -53,7 +59,7 @@ public class SimulationManager {
 
     public void addBody(float x, float y, float radius, Vector2 velocity) {
         System.out.println("[DEBUG] Adding body at (" + x + "," + y + ")");
-        PhysicsBody newBody = new PhysicsBody(world, x, y, radius, calculateMass(radius), Color.WHITE);
+        PhysicsBody newBody = new PhysicsBody(world, x, y, radius, calculateMass(radius), Color.GRAY);
         newBody.getBody().setLinearVelocity(velocity);
         bodies.add(newBody);
     }
@@ -61,6 +67,10 @@ public class SimulationManager {
     private float calculateMass(float radius) {
         // Example: Mass proportional to area
         return (float) (Math.PI * radius * radius);
+    }
+
+    public List<PhysicsBody> getBodiesSnapshot() {
+        return new ArrayList<>(bodies); // Return defensive copy
     }
 
     public void dispose() {

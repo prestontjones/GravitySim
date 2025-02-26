@@ -26,6 +26,9 @@ public class BodyCreator {
     private final World physicsWorld;
     private final OrthographicCamera camera;
 
+    // Velocity scaling factor to reduce the magnitude of the velocity vector.
+    private float velocityScale = 0.5f; // Adjust this value as needed.
+
     public BodyCreator(SimulationManager simulationManager, ShapeRenderer shapeRenderer, World physicsWorld, OrthographicCamera camera) {
         this.simulationManager = simulationManager;
         this.shapeRenderer = shapeRenderer;
@@ -49,15 +52,16 @@ public class BodyCreator {
         if (state == CreationState.INACTIVE) return;
 
         if (Gdx.input.justTouched()) {
-
             switch (state) {
                 case SETTING_POSITION:
                     position = new Vector2(mouseWorldPos);
+                    Gdx.app.log("BodyCreator", "Position set to: " + position);
                     state = CreationState.SETTING_RADIUS;
                     break;
                     
                 case SETTING_RADIUS:
                     radiusEnd = new Vector2(mouseWorldPos);
+                    Gdx.app.log("BodyCreator", "Radius end set to: " + radiusEnd);
                     state = CreationState.SETTING_VELOCITY;
                     break;
                     
@@ -70,22 +74,36 @@ public class BodyCreator {
 
     private void completeCreation(Vector2 velocityEnd) {
         float radius = position.dst(radiusEnd);
-        Vector2 velocity = new Vector2(velocityEnd).sub(position);
+        // Calculate raw velocity vector from the difference between velocityEnd and position.
+        Vector2 rawVelocity = new Vector2(velocityEnd).sub(position);
+        // Scale the velocity to reduce its magnitude.
+        Vector2 scaledVelocity = rawVelocity.scl(velocityScale);
+        
+        // Debug logs to trace the creation process.
+        Gdx.app.log("BodyCreator", "Creating body with:");
+        Gdx.app.log("BodyCreator", " - Position: " + position);
+        Gdx.app.log("BodyCreator", " - Radius: " + radius);
+        Gdx.app.log("BodyCreator", " - Raw Velocity: " + rawVelocity);
+        Gdx.app.log("BodyCreator", " - Scaled Velocity: " + scaledVelocity);
         
         simulationManager.addBody(
             position.x, 
             position.y, 
             radius, 
-            velocity
+            scaledVelocity
         );
-        state = CreationState.INACTIVE;
+
+        // Reset creation state for continuous body creation mode.
+        state = CreationState.SETTING_POSITION;
+        position = null;
+        radiusEnd = null;
     }
 
     public void renderPreview() {
         if (state == CreationState.INACTIVE) return;
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.setColor(Color.WHITE);
+        shapeRenderer.setColor(Color.GRAY);
 
         // Draw position marker
         if (position != null) {
@@ -93,9 +111,9 @@ public class BodyCreator {
         }
 
         // Draw radius preview
-        if (state == CreationState.SETTING_RADIUS && position != null) {
-            float radius = position.dst(currentMouse);
-            shapeRenderer.circle(position.x, position.y, radius);
+        if (position != null && (state == CreationState.SETTING_RADIUS || state == CreationState.SETTING_VELOCITY)) {
+            float previewRadius = (state == CreationState.SETTING_RADIUS) ? position.dst(currentMouse) : position.dst(radiusEnd);
+            shapeRenderer.circle(position.x, position.y, previewRadius);
         }
 
         // Draw velocity arrow
@@ -124,25 +142,28 @@ public class BodyCreator {
     }
 
     public InputProcessor getInputProcessor() {
-    return new InputAdapter() {
-        @Override
-        public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-            if (state != CreationState.INACTIVE) {
-                Vector3 screenPos = new Vector3(screenX, screenY, 0);
-                camera.unproject(screenPos); // Convert screen to world coordinates
+        return new InputAdapter() {
+            @Override
+            public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+                if (state != CreationState.INACTIVE) {
+                    Vector3 screenPos = new Vector3(screenX, screenY, 0);
+                    camera.unproject(screenPos); // Convert screen to world coordinates
 
-                Vector2 worldPos = new Vector2(screenPos.x, screenPos.y);
-                updateInput(worldPos);
-                return true;
+                    Vector2 worldPos = new Vector2(screenPos.x, screenPos.y);
+                    updateInput(worldPos);
+                    return true;
+                }
+                return false;
             }
-            return false;
-        }
-    };
-}
+        };
+    }
 
     public void update() {
-        if (state != CreationState.INACTIVE) {
-            // Additional update logic if needed
-        }
+        // Additional update logic if needed
+    }
+    
+    // Optional: Setter to adjust the velocity scaling externally.
+    public void setVelocityScale(float scale) {
+        this.velocityScale = scale;
     }
 }

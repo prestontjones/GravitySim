@@ -16,6 +16,7 @@ public class UICreationManager {
     private final Skin skin;
     private final SimulationManager simulationManager;
     private final BodyCreator bodyCreator;
+    private boolean predictionsEnabled = false;
 
     public UICreationManager(Stage stage, SimulationManager simulationManager, BodyCreator bodyCreator) {
         this.stage = stage;
@@ -32,9 +33,9 @@ public class UICreationManager {
         // Create UI elements
         TextButton pauseButton = new TextButton("Pause", skin);
         TextButton toggleWireFrame = new TextButton("Toggle Wire Frame", skin);
-        TextButton createBodyButton = new TextButton("Create Body", skin);
+        TextButton createBodyButton = new TextButton("Create Planets", skin);
         TextButton collisionToggle = new TextButton("Toggle collision", skin);
-        TextButton pathPrediction = new TextButton("Path Prediction", skin);
+        TextButton predictionToggleButton = new TextButton("Predictions: OFF", skin);
         TextButton showDirection = new TextButton("Show Direction", skin);
         TextButton deleteBody = new TextButton("Delete Body", skin);
 
@@ -49,7 +50,7 @@ public class UICreationManager {
         table.row();
         table.add(showDirection).width(200).height(100).padTop(10).padRight(10);
         table.row();
-        table.add(pathPrediction).width(200).height(100).padTop(10).padRight(10);
+        table.add(predictionToggleButton).width(200).height(100).padTop(10).padRight(10);
         table.row();
         table.add(toggleWireFrame).width(200).height(100).padTop(10).padRight(10);
         table.row();
@@ -74,10 +75,10 @@ public class UICreationManager {
             public void changed(ChangeEvent event, Actor actor) {
                 if (!bodyCreator.isActive()) {
                     bodyCreator.startCreation();
-                    createBodyButton.setText("Cancel Creation");
+                    createBodyButton.setText("Cancel Creation Mode");
                 } else {
                     bodyCreator.cancelCreation();
-                    createBodyButton.setText("Create Body");
+                    createBodyButton.setText("Create Planets");
                 }
             }
         });
@@ -89,10 +90,32 @@ public class UICreationManager {
                 simulationManager.setTimestepScale(timestepSlider.getValue());
             }
         });
+
+        predictionToggleButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                predictionsEnabled = !predictionsEnabled;
+                Gdx.app.log("UI", "Predictions toggled: " + predictionsEnabled);
+                predictionToggleButton.setText("Predictions: " + (predictionsEnabled ? "ON" : "OFF"));
+                
+                // Notify the prediction worker through proper channels
+                if (simulationManager != null) {
+                    simulationManager.setPredictionsEnabled(predictionsEnabled);
+                }
+            }
+        });
+    }
+
+    public boolean arePredictionsEnabled() {
+        return predictionsEnabled;
     }
 
     public Stage getStage() {
         return stage;
+    }
+
+    public boolean isPredictionsEnabled() {
+        return predictionsEnabled;
     }
 
     public void dispose() {

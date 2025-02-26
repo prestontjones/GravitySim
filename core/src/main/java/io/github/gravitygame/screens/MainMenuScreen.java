@@ -36,11 +36,11 @@ public class MainMenuScreen implements Screen {
         TextButton githubButton = new TextButton("GitHub", skin);
 
         // Add buttons to the table
-        table.add(startButton).width(200).height(50).padBottom(10);
+        table.add(startButton).width(400).height(100).padBottom(10);
         table.row();
-        table.add(settingsButton).width(200).height(50).padBottom(10);
+        table.add(settingsButton).width(400).height(100).padBottom(10);
         table.row();
-        table.add(githubButton).width(200).height(50).padBottom(10);
+        table.add(githubButton).width(400).height(100).padBottom(10);
 
         // Add button listeners
         startButton.addListener(event -> {
@@ -62,9 +62,11 @@ public class MainMenuScreen implements Screen {
             if (event.isHandled()) {
                 // Open GitHub link in the default browser
                 Gdx.net.openURI("https://github.com/prestontjones");
+                System.out.println("[DEBUG] External Link Clicked");
             }
             return true;
         });
+        System.out.println("[DEBUG] Main Menu Screen Loaded");
     }
 
     @Override
