@@ -3,6 +3,7 @@ package io.github.gravitygame.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
@@ -11,25 +12,23 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 import io.github.gravitygame.Main;
-import io.github.gravitygame.entities.BodyCreator;
-import io.github.gravitygame.managers.PredictionManager;
+import io.github.gravitygame.entities.BodyCreationController;
+import io.github.gravitygame.entities.PhysicsBody;
+import io.github.gravitygame.managers.CameraController;
 import io.github.gravitygame.managers.SimulationManager;
-import io.github.gravitygame.managers.StarsManager;
 import io.github.gravitygame.managers.UICreationManager;
-import io.github.gravitygame.utils.CameraController;
-import io.github.gravitygame.utils.CameraController.CameraMode;
-import io.github.gravitygame.utils.GameRenderer;
-
 
 public class GameScreen implements Screen {
+
     private final Main main;
+    private Stage stage;
     private OrthographicCamera camera;
-    private CameraController cameraController;
+    private ShapeRenderer shapeRenderer;
     private SimulationManager simulationManager;
-    private BodyCreator bodyCreator;
-    private UICreationManager uiManager;
-    private GameRenderer gameRenderer;
-    private PredictionManager predictionManager;
+    private CameraController cameraController;
+    private BodyCreationController bodyCreationController;
+    private UICreationManager uiCreationManager;
+    private Stage uiStage;
 
     public GameScreen(Main main) {
         this.main = main;
@@ -37,75 +36,115 @@ public class GameScreen implements Screen {
 
     @Override
     public void show() {
-        camera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        initializeCoreSystems();
+        initializeUI();
+        setupInput();
+    }
+
+    private void initializeCoreSystems() {
+        // Initialize camera
+        camera = new OrthographicCamera();
+        stage = new Stage(new ScreenViewport());
         camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
+        // Initialize simulation
         simulationManager = new SimulationManager();
-        bodyCreator = new BodyCreator(simulationManager, new ShapeRenderer(), simulationManager.getWorld(), camera);
-        cameraController = new CameraController(camera);
 
-        Stage stage = new Stage(new ScreenViewport());
-        uiManager = new UICreationManager(stage, simulationManager, bodyCreator, cameraController);
-        uiManager.setupUI();
+        // Initialize body creation system
+        bodyCreationController = new BodyCreationController(
+            simulationManager,
+            simulationManager.getWorld(),
+            camera,
+            1.0f
+        );
 
-        StarsManager starfield = new StarsManager(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), 200);
+        // Initialize rendering
+        shapeRenderer = new ShapeRenderer();
 
-        gameRenderer = new GameRenderer(camera, simulationManager, bodyCreator, uiManager, starfield);
-        predictionManager = new PredictionManager(simulationManager, gameRenderer);
+        // Initialize camera controller
+        cameraController = new CameraController(camera, simulationManager, stage);
+    }
 
+    private void initializeUI() {
+        // Create UI stage
+        uiStage = new Stage(new ScreenViewport());
+        
+        // Initialize UI manager
+        uiCreationManager = new UICreationManager(
+            uiStage,
+            simulationManager,
+            bodyCreationController,
+            cameraController
+        );
+        
+        // Setup UI components
+        uiCreationManager.setupUI();
+    }
+
+    private void setupInput() {
         InputMultiplexer multiplexer = new InputMultiplexer();
-        multiplexer.addProcessor(uiManager.getStage());
-        multiplexer.addProcessor(cameraController);
-        multiplexer.addProcessor(bodyCreator.getInputProcessor());
+        multiplexer.addProcessor(uiStage);                     // UI first
+        multiplexer.addProcessor(cameraController);            // Camera controls
+        multiplexer.addProcessor(bodyCreationController.getInputProcessor()); // Body creation
         Gdx.input.setInputProcessor(multiplexer);
     }
 
     @Override
     public void render(float delta) {
-        Vector3 mousePos = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
-        camera.unproject(mousePos);
-        bodyCreator.updateInput(new Vector2(mousePos.x, mousePos.y));
+        update(delta);
+        renderWorld();
+        renderUI();
+    }
 
-        if (cameraController.getMode() == CameraMode.FOLLOW) {
-        Vector2 com = simulationManager.getCenterOfMass();
-        cameraController.setFollowTarget(com);
-        }  
-
+    private void update(float delta) {
+        // Update camera and simulation
         cameraController.update(delta);
         simulationManager.update(delta);
-        bodyCreator.update();
-        predictionManager.update(delta);
-        gameRenderer.render(delta);
+        camera.update();
+
+        // Update body creation input
+        Vector3 mousePos = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
+        camera.unproject(mousePos);
+        bodyCreationController.updateInput(new Vector2(mousePos.x, mousePos.y));
+    }
+
+    private void renderWorld() {
+        // Clear screen
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        // Render physics bodies
+        shapeRenderer.setProjectionMatrix(camera.combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        for (PhysicsBody body : simulationManager.getBodies()) {
+            body.render(shapeRenderer);
+        }
+        
+        // Render creation preview
+        bodyCreationController.renderPreview(camera, shapeRenderer);
+        shapeRenderer.end();
+    }
+
+    private void renderUI() {
+        // Render UI elements
+        uiCreationManager.render(Gdx.graphics.getDeltaTime());
     }
 
     @Override
     public void resize(int width, int height) {
         camera.setToOrtho(false, width, height);
-        uiManager.getStage().getViewport().update(width, height, true);
-    }
-
-    @Override
-    public void hide() {
-        Gdx.input.setInputProcessor(null);
+        uiStage.getViewport().update(width, height, true);
     }
 
     @Override
     public void dispose() {
-        gameRenderer.dispose();
-        uiManager.dispose();
+        shapeRenderer.dispose();
         simulationManager.dispose();
-        predictionManager.dispose();
+        uiCreationManager.dispose();
+        uiStage.dispose();
     }
 
-    @Override
-    public void pause() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'pause'");
-    }
-
-    @Override
-    public void resume() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'resume'");
-    }
+    // Required empty implementations
+    @Override public void pause() {}
+    @Override public void resume() {}
+    @Override public void hide() {}
 }

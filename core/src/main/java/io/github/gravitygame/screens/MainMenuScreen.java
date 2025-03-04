@@ -66,7 +66,6 @@ public class MainMenuScreen implements Screen {
             }
             return true;
         });
-        System.out.println("[DEBUG] Main Menu Screen Loaded");
     }
 
     @Override
