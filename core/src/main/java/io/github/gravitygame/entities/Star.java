@@ -25,11 +25,11 @@ public class Star {
         // Add slight color variations based on distance (simulating temperature)
         float temp = MathUtils.random(); // Random temperature for star color
         if (temp < 0.33f) {
-            this.color = new Color(1f, 0.6f, 0.1f, 1f); // Red-orange (closer stars)
+            this.color = new Color(1f, 0.75f, 0.4f, 1f); // Red-orange (closer stars)
         } else if (temp < 0.66f) {
-            this.color = new Color(1f, 1f, 1f, 1f); // White (mid-range distance)
+            this.color = new Color(.1f, 1f, 1f, 1f); // White (mid-range distance)
         } else {
-            this.color = new Color(0.2f, 0.5f, 1f, 1f); // Blue (distant stars)
+            this.color = new Color(0.4f, 0.6f, .9f, .9f); // Blue (distant stars)
         }
 
         // Randomize twinkle factor for shimmering effect
