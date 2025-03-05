@@ -101,7 +101,7 @@ public class GameScreen implements Screen {
     public void render(float delta) {
         update(delta);
         renderWorld();
-        starsManager.render(shapeRenderer, camera, cameraController);
+        starsManager.render(shapeRenderer, camera);
         uiCreationManager.render(Gdx.graphics.getDeltaTime());
     }
 

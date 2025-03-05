@@ -15,49 +15,73 @@ public class StarsManager {
     private final int numStars;
     private final float width, height;
     private final float cameraOffsetX, cameraOffsetY;
+    
+    // A separate camera for the stars
+    private final OrthographicCamera starCamera;
+    // Factor to scale the zoom effect for the stars (0 means stars never zoom, 1 means same as simulation)
+    private final float starZoomFactor = 0.01f; 
+    // Factor to scale the panning (parallax) effect for the stars (0 means stars never move, 1 means same as simulation)
+    private final float starPanFactor = 0.1f; 
 
-    public StarsManager(float width, float height, int numStars, OrthographicCamera camera) {
+    // Store the initial simulation camera position (for parallax calculations)
+    private final Vector2 initialCameraPosition;
+    
+    public StarsManager(float width, float height, int numStars, OrthographicCamera simulationCamera) {
         this.width = width;
         this.height = height;
         this.numStars = numStars;
         this.stars = new ArrayList<>();
-        this.cameraOffsetX = camera.position.x - width / 2;
-        this.cameraOffsetY = camera.position.y - height / 2;
-        generateStars(camera);
+        // Save the initial simulation camera position.
+        this.initialCameraPosition = new Vector2(simulationCamera.position.x, simulationCamera.position.y);
+        this.cameraOffsetX = initialCameraPosition.x - width / 2;
+        this.cameraOffsetY = initialCameraPosition.y - height / 2;
+        
+        // Initialize the star camera with the same viewport dimensions as the simulation camera.
+        starCamera = new OrthographicCamera(simulationCamera.viewportWidth, simulationCamera.viewportHeight);
+        // Start with the initial position.
+        starCamera.position.set(initialCameraPosition.x, initialCameraPosition.y, 0);
+        // Set the star camera zoom to be less affected by the simulation zoom.
+        starCamera.zoom = 1 + (simulationCamera.zoom - 1) * starZoomFactor;
+        starCamera.update();
+        
+        generateStars();
     }
-
-    private void generateStars(OrthographicCamera camera) {
+    
+    private void generateStars() {
         stars.clear();
         for (int i = 0; i < numStars; i++) {
-            // Generate random star position
+            // Generate random star position within the defined area plus the camera offset.
             float x = MathUtils.random(0, width) + cameraOffsetX;
             float y = MathUtils.random(0, height) + cameraOffsetY;
-
-            // Assign a distance value to simulate depth (farther stars should be smaller and dimmer)
-            float distance = MathUtils.random(50, 200); // Star distance from camera
+            // Use distance to simulate depth
+            float distance = MathUtils.random(50, 200);
             stars.add(new Star(x, y, distance));
         }
     }
-
-    public void render(ShapeRenderer renderer, OrthographicCamera camera, CameraController cameraController) {
-        // Get the parallax offset from the cameraController
-        Vector2 parallaxOffset = cameraController.getParallaxOffset();
-        renderer.setProjectionMatrix(camera.combined);
+    
+    /**
+     * Renders the stars using the dedicated star camera.
+     *
+     * @param renderer the ShapeRenderer used for drawing
+     * @param simulationCamera the simulation camera to follow (for position and zoom)
+     */
+    public void render(ShapeRenderer renderer, OrthographicCamera simulationCamera) {
+        // Calculate a parallax position: start from the initial position and add a fraction of the simulation camera's movement.
+        float newX = initialCameraPosition.x + (simulationCamera.position.x - initialCameraPosition.x) * starPanFactor;
+        float newY = initialCameraPosition.y + (simulationCamera.position.y - initialCameraPosition.y) * starPanFactor;
+        starCamera.position.set(newX, newY, simulationCamera.position.z);
+        
+        // Apply a reduced zoom effect for the star field.
+        starCamera.zoom = 1 + (simulationCamera.zoom - 1) * starZoomFactor;
+        starCamera.viewportWidth = simulationCamera.viewportWidth;
+        starCamera.viewportHeight = simulationCamera.viewportHeight;
+        starCamera.update();
+        
+        renderer.setProjectionMatrix(starCamera.combined);
         renderer.begin(ShapeRenderer.ShapeType.Filled);
-
-        // Adjust each star's position based on the parallax effect
         for (Star star : stars) {
-            // Apply parallax by shifting the star's position based on the camera's position
-            float xOffset = star.getPosition().x - parallaxOffset.x;
-            float yOffset = star.getPosition().y - parallaxOffset.y;
-
-            // Update the star's twinkle effect (this makes them shimmer randomly)
-            star.updateTwinkle();
-
-            // Render the star at the adjusted position with twinkling effect
-            star.render(renderer, xOffset, yOffset);
+            star.render(renderer, star.getPosition().x, star.getPosition().y);
         }
-
         renderer.end();
     }
 }
