@@ -9,8 +9,8 @@ public class Star {
     public Vector2 position;
     public float size;
     public Color color;
-    private float brightness;
-    private float distance;
+    private final float brightness;
+    private final float distance;
     private float twinkleFactor;
 
     // Constructor now includes distance and random brightness

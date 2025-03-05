@@ -17,7 +17,7 @@ public class CameraController extends InputAdapter {
     private final SimulationManager simulationManager;
     private final Stage stage; // To check if the input is hitting a UI element
     private CameraMode mode = CameraMode.PAN;
-    private float parallaxFactor = .1f; // Background moves at 50% speed
+    private float parallaxFactor = .9f; // Background moves at 50% speed
     private boolean parallaxEnabled = true;
 
     // For panning mode:
