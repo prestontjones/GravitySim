@@ -16,8 +16,9 @@ public class CameraController extends InputAdapter {
     private final OrthographicCamera camera;
     private final SimulationManager simulationManager;
     private final Stage stage; // To check if the input is hitting a UI element
-    private CameraMode mode = CameraMode.FOLLOW;
-    private float parallaxFactor = 0.5f; // Background moves at 50% speed
+    private CameraMode mode = CameraMode.PAN;
+    private float parallaxFactor = .1f; // Background moves at 50% speed
+    private boolean parallaxEnabled = true;
 
     // For panning mode:
     private Vector3 lastTouch = new Vector3();
@@ -68,7 +69,7 @@ public class CameraController extends InputAdapter {
      * The background should use this offset so that it moves slower than the simulation.
      */
     public Vector2 getParallaxOffset() {
-        return new Vector2(camera.position.x * parallaxFactor, camera.position.y * parallaxFactor);
+        return new Vector2(camera.position.x * -parallaxFactor, camera.position.y * -parallaxFactor);
     }
 
     @Override
@@ -124,5 +125,13 @@ public class CameraController extends InputAdapter {
         }
         center.scl(1f / bodies.size);
         return center;
+    }
+
+    public void setParallaxEnabled(boolean enabled) {
+        this.parallaxEnabled = enabled;
+    }
+
+    public boolean isParallaxEnabled() {
+        return parallaxEnabled;
     }
 }

@@ -13,10 +13,11 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 import io.github.gravitygame.Main;
 import io.github.gravitygame.entities.BodyCreationController;
-import io.github.gravitygame.entities.PhysicsBody;
 import io.github.gravitygame.managers.CameraController;
 import io.github.gravitygame.managers.SimulationManager;
+import io.github.gravitygame.managers.StarsManager;
 import io.github.gravitygame.managers.UICreationManager;
+import io.github.gravitygame.physics.PhysicsRenderer;
 
 public class GameScreen implements Screen {
 
@@ -28,6 +29,7 @@ public class GameScreen implements Screen {
     private CameraController cameraController;
     private BodyCreationController bodyCreationController;
     private UICreationManager uiCreationManager;
+    private StarsManager starsManager;
     private Stage uiStage;
 
     public GameScreen(Main main) {
@@ -38,6 +40,7 @@ public class GameScreen implements Screen {
     public void show() {
         initializeCoreSystems();
         initializeUI();
+        initializeStars();
         setupInput();
     }
 
@@ -81,11 +84,16 @@ public class GameScreen implements Screen {
         uiCreationManager.setupUI();
     }
 
+    private void initializeStars() {
+        // Create a StarsManager with a number of stars based on screen size (adjust number as needed)
+        starsManager = new StarsManager(3000, 3000, 3000, camera); // Example: 200 stars
+    }
+
     private void setupInput() {
         InputMultiplexer multiplexer = new InputMultiplexer();
         multiplexer.addProcessor(uiStage);                     // UI first
-        multiplexer.addProcessor(cameraController);            // Camera controls
         multiplexer.addProcessor(bodyCreationController.getInputProcessor()); // Body creation
+        multiplexer.addProcessor(cameraController);            // Camera controls
         Gdx.input.setInputProcessor(multiplexer);
     }
 
@@ -93,7 +101,8 @@ public class GameScreen implements Screen {
     public void render(float delta) {
         update(delta);
         renderWorld();
-        renderUI();
+        starsManager.render(shapeRenderer, camera, cameraController);
+        uiCreationManager.render(Gdx.graphics.getDeltaTime());
     }
 
     private void update(float delta) {
@@ -102,6 +111,9 @@ public class GameScreen implements Screen {
         simulationManager.update(delta);
         camera.update();
 
+        //Update Simulation
+        simulationManager.update(delta);
+
         // Update body creation input
         Vector3 mousePos = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
         camera.unproject(mousePos);
@@ -109,24 +121,15 @@ public class GameScreen implements Screen {
     }
 
     private void renderWorld() {
-        // Clear screen
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
-        // Render physics bodies
+    
         shapeRenderer.setProjectionMatrix(camera.combined);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        for (PhysicsBody body : simulationManager.getBodies()) {
-            body.render(shapeRenderer);
-        }
         
-        // Render creation preview
-        bodyCreationController.renderPreview(camera, shapeRenderer);
+        // Single batch for all physics rendering
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        new PhysicsRenderer().renderBodies(shapeRenderer, simulationManager.getBodies());
+        bodyCreationController.renderPreview(shapeRenderer);
         shapeRenderer.end();
-    }
-
-    private void renderUI() {
-        // Render UI elements
-        uiCreationManager.render(Gdx.graphics.getDeltaTime());
     }
 
     @Override
@@ -141,6 +144,7 @@ public class GameScreen implements Screen {
         simulationManager.dispose();
         uiCreationManager.dispose();
         uiStage.dispose();
+        stage.dispose();
     }
 
     // Required empty implementations

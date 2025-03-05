@@ -9,30 +9,20 @@ import com.badlogic.gdx.physics.box2d.Body;
 
 public class PhysicsBody {
     private final Body body;
-    private BodyState currentState;
+    private final BodyState currentState;
 
     public PhysicsBody(Body box2DBody, BodyState initialState) {
         this.body = box2DBody;
         this.currentState = initialState;
-        syncBox2DState();
-    }
-
-    public void updateState(BodyState newState) {
-        this.currentState = newState;
-        syncBox2DState();
-    }
-
-    private void syncBox2DState() {
-        body.setTransform(currentState.getPosition(), 0);
-        body.setLinearVelocity(currentState.getVelocity());
     }
 
     public void render(ShapeRenderer shapeRenderer) {
-        Vector2 position = currentState.getPosition();
+        Vector2 position = body.getPosition();
         float radius = currentState.getRadius();
         Color color = currentState.getColor();
 
         // Original rendering logic
+        shapeRenderer.setColor(color);
         shapeRenderer.circle(position.x, position.y, radius);
     }
 
@@ -52,8 +42,8 @@ public class PhysicsBody {
     public Color getColor() { return currentState.getColor(); }
     public UUID getId() { return currentState.getId(); }
     public Body getBody() { return body; }
-    public Vector2 getVelocity() { return currentState.getVelocity(); }
-    public Vector2 getPosition() { return currentState.getPosition(); }
+    public Vector2 getVelocity() { return body.getLinearVelocity(); }
+    public Vector2 getPosition() { return body.getPosition(); }
     public float getRadius() { return currentState.getRadius(); }
     
 }

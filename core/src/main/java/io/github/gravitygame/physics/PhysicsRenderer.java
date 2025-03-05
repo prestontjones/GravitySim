@@ -1,14 +1,12 @@
 package io.github.gravitygame.physics;
 
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.utils.Array;
 
 import io.github.gravitygame.entities.PhysicsBody;
 
 public class PhysicsRenderer {
     public void renderBodies(ShapeRenderer renderer, Array<PhysicsBody> bodies) {
-        renderer.begin(ShapeType.Line);
         for(PhysicsBody body : bodies) {
             renderer.setColor(body.getColor());
             renderer.circle(
@@ -17,6 +15,5 @@ public class PhysicsRenderer {
                 body.getRadius()
             );
         }
-        renderer.end();
     }
 }

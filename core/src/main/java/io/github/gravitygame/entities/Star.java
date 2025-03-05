@@ -9,29 +9,47 @@ public class Star {
     public Vector2 position;
     public float size;
     public Color color;
+    private float brightness;
+    private float distance;
+    private float twinkleFactor;
 
-    public Star(float x, float y) {
+    // Constructor now includes distance and random brightness
+    public Star(float x, float y, float distance) {
         this.position = new Vector2(x, y);
-        this.size = MathUtils.random(1f, 3f); // Varying star size
+        this.distance = distance;
 
-        // Generate a base brightness level (close to white)
-        float brightness = MathUtils.random(0.85f, 1f);
+        // Adjust size based on distance (near stars are bigger, far stars are smaller)
+        this.size = MathUtils.random(50f, 150f) * (1 / distance); // Smaller stars for distant
+        this.brightness = MathUtils.random(10f, 200f) * (1 / distance); // Dimmer for distant stars
 
-        // Add slight color variations
-        float r = brightness + MathUtils.random(-0.05f, 0.05f); // Slight red shift
-        float g = brightness + MathUtils.random(-0.05f, 0.05f); // Slight green shift
-        float b = brightness + MathUtils.random(-0.05f, 0.05f); // Slight blue shift
+        // Add slight color variations based on distance (simulating temperature)
+        float temp = MathUtils.random(); // Random temperature for star color
+        if (temp < 0.33f) {
+            this.color = new Color(1f, 0.6f, 0.1f, 1f); // Red-orange (closer stars)
+        } else if (temp < 0.66f) {
+            this.color = new Color(1f, 1f, 1f, 1f); // White (mid-range distance)
+        } else {
+            this.color = new Color(0.2f, 0.5f, 1f, 1f); // Blue (distant stars)
+        }
 
-        // Ensure values stay within valid color range [0,1]
-        r = MathUtils.clamp(r, 0.85f, 1f);
-        g = MathUtils.clamp(g, 0.85f, 1f);
-        b = MathUtils.clamp(b, 0.85f, 1f);
-
-        this.color = new Color(r, g, b, 1f); // Slightly tinted white
+        // Randomize twinkle factor for shimmering effect
+        this.twinkleFactor = MathUtils.random(0.85f, 1f);
     }
 
-    public void render(ShapeRenderer renderer) {
-        renderer.setColor(color);
-        renderer.circle(position.x, position.y, size);
+    // Update brightness for twinkling effect (flickering)
+    public void updateTwinkle() {
+        this.twinkleFactor = MathUtils.random(0.85f, 1.0f); // Slight variation for twinkling
+    }
+
+    // Render star with twinkle effect and size adjustment
+    public void render(ShapeRenderer renderer, float xOffset, float yOffset) {
+        // Adjust brightness based on twinkling effect
+        float currentBrightness = this.brightness * twinkleFactor;
+        renderer.setColor(color.r * currentBrightness, color.g * currentBrightness, color.b * currentBrightness, 1f);
+        renderer.circle(position.x + xOffset, position.y + yOffset, size);
+    }
+
+    public Vector2 getPosition() {
+        return position;
     }
 }

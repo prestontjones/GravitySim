@@ -10,52 +10,44 @@ public class BodyPreviewRenderer {
     private static final float POSITION_MARKER_RADIUS = 3f;
     private static final float ARROW_HEAD_SIZE = 10f;
 
-    public void render(BodyCreationStateMachine.CreationState state, 
-                      BodyCreationData data,
+    public void render(BodyCreationController controller,
                       OrthographicCamera camera,
                       ShapeRenderer shapeRenderer) {
-        if (state == BodyCreationStateMachine.CreationState.INACTIVE) return;
+        if (!controller.isActive()) return;  // Check if creation is active
 
-        shapeRenderer.setProjectionMatrix(camera.combined);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
         shapeRenderer.setColor(PREVIEW_COLOR);
+        BodyCreationData data = controller.getCurrentData();
 
         drawPositionMarker(data, shapeRenderer);
-        drawRadiusPreview(state, data, shapeRenderer);
-        drawVelocityArrow(state, data, shapeRenderer);
-
-        shapeRenderer.end();
+        drawRadiusPreview(controller, data, shapeRenderer);
+        drawVelocityArrow(controller, data, shapeRenderer);
     }
 
     private void drawPositionMarker(BodyCreationData data, ShapeRenderer shapeRenderer) {
         if (data.getPosition() != null) {
-            shapeRenderer.circle(data.getPosition().x, 
-                               data.getPosition().y, 
-                               POSITION_MARKER_RADIUS);
+            shapeRenderer.circle(data.getPosition().x, data.getPosition().y, POSITION_MARKER_RADIUS);
         }
     }
 
-    private void drawRadiusPreview(BodyCreationStateMachine.CreationState state, 
-                                 BodyCreationData data,
-                                 ShapeRenderer shapeRenderer) {
+    private void drawRadiusPreview(BodyCreationController controller, BodyCreationData data, ShapeRenderer shapeRenderer) {
         if (data.getPosition() == null) return;
 
-        switch (state) {
-            case SETTING_RADIUS:
-                float liveRadius = data.getPosition().dst(data.getCurrentMouse());
+        switch (controller.getCurrentState()) {
+            case "SETTING_RADIUS":
+                float rawDistance = data.getPosition().dst(data.getCurrentMouse());
+                float liveRadius = controller.capMaximum(rawDistance);
                 shapeRenderer.circle(data.getPosition().x, data.getPosition().y, liveRadius);
                 break;
-            case SETTING_VELOCITY:
-                float fixedRadius = data.getPosition().dst(data.getRadiusEnd());
+            case "SETTING_VELOCITY":
+                float rawFixedDistance = data.getPosition().dst(data.getRadiusEnd());
+                float fixedRadius = controller.capMaximum(rawFixedDistance);
                 shapeRenderer.circle(data.getPosition().x, data.getPosition().y, fixedRadius);
                 break;
         }
     }
 
-    private void drawVelocityArrow(BodyCreationStateMachine.CreationState state,
-                                 BodyCreationData data,
-                                 ShapeRenderer shapeRenderer) {
-        if (state != BodyCreationStateMachine.CreationState.SETTING_VELOCITY) return;
+    private void drawVelocityArrow(BodyCreationController controller, BodyCreationData data, ShapeRenderer shapeRenderer) {
+        if (!controller.getCurrentState().equals("SETTING_VELOCITY")) return;
         if (data.getPosition() == null || data.getCurrentMouse() == null) return;
 
         shapeRenderer.line(data.getPosition(), data.getCurrentMouse());

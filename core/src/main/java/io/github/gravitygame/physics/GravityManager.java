@@ -6,17 +6,12 @@ import com.badlogic.gdx.utils.Array;
 import io.github.gravitygame.entities.PhysicsBody;
 
 public final class GravityManager {
-    private static final float G = 6.67430e-11f; // Realistic gravitational constant
-    private static final float MIN_DISTANCE = 1f; // Prevent singularity
+    private static final float G = 6.67430f; // Realistic gravitational constant
+    private static final float MIN_DISTANCE = .1f; // Prevent singularity
     private static final Vector2 tmpForce = new Vector2();
     private static final Vector2 tmpDelta = new Vector2();
 
     public static void updateGravity(Array<PhysicsBody> bodies) {
-        // Clear previous forces
-        for(PhysicsBody body : bodies) {
-            body.getBody().setLinearVelocity(body.getBody().getLinearVelocity());
-        }
-
         // N-body gravity calculation
         for(int i = 0; i < bodies.size; i++) {
             PhysicsBody a = bodies.get(i);

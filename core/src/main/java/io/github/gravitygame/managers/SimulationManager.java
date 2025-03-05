@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Array;
@@ -26,7 +27,10 @@ public class SimulationManager {
     }
 
    public void update(float delta) {
-        if (isPaused) return;
+        if (isPaused) {
+            Gdx.app.log("SimManager", "GamePaused"); 
+            return;
+        }
         
         // Convert Array to List properly
         List<PhysicsBody> bodyList = new ArrayList<>();
@@ -60,12 +64,14 @@ public class SimulationManager {
      public void addBody(float x, float y, float radius, Vector2 initialVelocity) {
         PhysicsBody body = BodyFactory.createBody(
             box2dWorld,
+            initialVelocity,
             x, y,
             radius,
             calculateMass(radius)
         );
         body.getBody().setLinearVelocity(initialVelocity);
         bodies.add(body);
+        Gdx.app.log("Entities", "Body Created with velocity: " + initialVelocity);
     }
 
     public void removeBody(UUID id) {
