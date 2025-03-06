@@ -3,12 +3,15 @@ package io.github.gravitygame.managers;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.utils.Align;
 
 import io.github.gravitygame.entities.BodyCreationController;
+import io.github.gravitygame.utils.PerformanceMonitor;
 
 public class UICreationManager {
     private final Stage stage;
@@ -16,6 +19,10 @@ public class UICreationManager {
     private final SimulationManager simulationManager;
     private final BodyCreationController bodyCreationController;
     private final CameraController cameraController;
+    private final PerformanceMonitor performanceMonitor;
+    
+    private Label fpsLabel;
+    private Label frameTimeLabel;
 
     // Constructor
     public UICreationManager(Stage stage, SimulationManager simulationManager, 
@@ -25,6 +32,7 @@ public class UICreationManager {
         this.bodyCreationController = bodyCreationController;
         this.cameraController = cameraController;
         this.skin = new Skin(Gdx.files.internal("skin/neon-ui.json"));
+        this.performanceMonitor = new PerformanceMonitor();
     }
 
     // Setup UI elements and listeners
@@ -36,6 +44,9 @@ public class UICreationManager {
         table.setFillParent(true);
         table.top().right();
         stage.addActor(table);
+
+        // Create performance monitor labels
+        setupPerformanceUI();
 
         // Create UI buttons
         TextButton pauseButton = createPauseButton();
@@ -50,6 +61,27 @@ public class UICreationManager {
         table.add(createBodyButton).width(200).height(100).padTop(10).padRight(10);
 
         Gdx.app.log("UI", "UI setup complete");
+    }
+    
+    // Setup performance monitoring UI
+    private void setupPerformanceUI() {
+        Table perfTable = new Table();
+        perfTable.setFillParent(true);
+        perfTable.top().left();
+        stage.addActor(perfTable);
+        
+        // Create labels for FPS and Frame Time
+        fpsLabel = new Label("FPS: 0", skin);
+        frameTimeLabel = new Label("Frame Time: 0.0 ms", skin);
+        
+        // Style the labels
+        fpsLabel.setAlignment(Align.left);
+        frameTimeLabel.setAlignment(Align.left);
+        
+        // Add labels to the performance table
+        perfTable.add(fpsLabel).padTop(10).padLeft(10).left();
+        perfTable.row();
+        perfTable.add(frameTimeLabel).padTop(5).padLeft(10).left();
     }
 
     // Create the Pause Button and add listener
@@ -110,16 +142,21 @@ public class UICreationManager {
         }
     }
 
+    // Update performance metrics
+    private void updatePerformanceMetrics() {
+        performanceMonitor.update();
+        
+        // Update labels with current metrics
+        fpsLabel.setText(String.format("FPS: %.1f", performanceMonitor.getFPS()));
+        frameTimeLabel.setText(String.format("Frame Time: %.2f ms", performanceMonitor.getAverageFrameTime()));
+    }
+
     // Render the UI
     public void render(float delta) {
+        updatePerformanceMetrics();
         stage.act(delta);
         stage.draw();
     }
-
-    // Getter for predictionsEnabled flag
-    // public boolean isPredictionsEnabled() {
-    //     return predictionsEnabled;
-    // }
 
     // Getter for the stage
     public Stage getStage() {
