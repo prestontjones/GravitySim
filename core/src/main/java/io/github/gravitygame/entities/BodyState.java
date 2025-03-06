@@ -38,6 +38,7 @@ public final class BodyState {
         return new BodyState(position.cpy(), velocity.cpy(), radius, mass, new Color(color), id);
     }
 
+
     // Getters (no setters - immutable)
     public Vector2 getPosition() { return position.cpy(); }
     public Vector2 getVelocity() { return velocity.cpy(); }

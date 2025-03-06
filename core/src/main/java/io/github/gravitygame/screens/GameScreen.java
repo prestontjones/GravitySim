@@ -17,7 +17,10 @@ import io.github.gravitygame.managers.CameraController;
 import io.github.gravitygame.managers.SimulationManager;
 import io.github.gravitygame.managers.StarsManager;
 import io.github.gravitygame.managers.UICreationManager;
+import io.github.gravitygame.managers.WorldStateManager;
 import io.github.gravitygame.physics.PhysicsRenderer;
+import io.github.gravitygame.physics.TrajectoryRenderer;
+import io.github.gravitygame.utils.WorldState;
 
 public class GameScreen implements Screen {
 
@@ -31,6 +34,11 @@ public class GameScreen implements Screen {
     private UICreationManager uiCreationManager;
     private StarsManager starsManager;
     private Stage uiStage;
+    private TrajectoryRenderer trajectoryRenderer;
+
+    // Added WorldStateQueue for state tracking
+    private WorldStateManager worldStateManager;
+    private PhysicsRenderer physicsRenderer;
 
     public GameScreen(Main main) {
         this.main = main;
@@ -50,8 +58,12 @@ public class GameScreen implements Screen {
         stage = new Stage(new ScreenViewport());
         camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
-        // Initialize simulation
+        // Initialize simulation, and WorldStateManager
         simulationManager = new SimulationManager();
+        worldStateManager = new WorldStateManager();
+
+        trajectoryRenderer = new TrajectoryRenderer(worldStateManager);
+        trajectoryRenderer.setEnabled(true);
 
         // Initialize body creation system
         bodyCreationController = new BodyCreationController(
@@ -63,6 +75,7 @@ public class GameScreen implements Screen {
 
         // Initialize rendering
         shapeRenderer = new ShapeRenderer();
+        physicsRenderer = new PhysicsRenderer(worldStateManager); // Pass world state queue
 
         // Initialize camera controller
         cameraController = new CameraController(camera, simulationManager, stage);
@@ -85,8 +98,8 @@ public class GameScreen implements Screen {
     }
 
     private void initializeStars() {
-        // Create a StarsManager with a number of stars based on screen size (adjust number as needed)
-        starsManager = new StarsManager(3000, 3000, 3000, camera); // Example: 200 stars
+        // Create a StarsManager with a number of stars based on screen size
+        starsManager = new StarsManager(3000, 3000, 3000, camera);
     }
 
     private void setupInput() {
@@ -111,8 +124,9 @@ public class GameScreen implements Screen {
         simulationManager.update(delta);
         camera.update();
 
-        //Update Simulation
-        simulationManager.update(delta);
+        // Store the world state
+        WorldState currentWorldState = worldStateManager.createWorldState(simulationManager.getBodies());
+        worldStateManager.saveState(currentWorldState);
 
         // Update body creation input
         Vector3 mousePos = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
@@ -125,11 +139,15 @@ public class GameScreen implements Screen {
     
         shapeRenderer.setProjectionMatrix(camera.combined);
         
-        // Single batch for all physics rendering
+        // Render historical physics state from WorldStateQueue
+        physicsRenderer.renderBodies(shapeRenderer, simulationManager.getBodies());
+
+        // Render body preview
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        new PhysicsRenderer().renderBodies(shapeRenderer, simulationManager.getBodies());
         bodyCreationController.renderPreview(shapeRenderer);
         shapeRenderer.end();
+
+        trajectoryRenderer.renderTrajectories(shapeRenderer);
     }
 
     @Override

@@ -10,31 +10,36 @@ import com.badlogic.gdx.physics.box2d.Body;
 public class PhysicsBody {
     private final Body body;
     private final BodyState currentState;
+    
+        public PhysicsBody(Body box2DBody, BodyState initialState) {
+            this.body = box2DBody;
+            this.currentState = initialState;
+        }
+    
+        public void render(ShapeRenderer shapeRenderer) {
+            Vector2 position = body.getPosition();
+            float radius = currentState.getRadius();
+            Color color = currentState.getColor();
+    
+            // Original rendering logic
+            shapeRenderer.setColor(color);
+            shapeRenderer.circle(position.x, position.y, radius);
+        }
+    
+        public BodyState getCurrentState() {
+            return new BodyState(
+                body.getPosition(),
+                body.getLinearVelocity(),
+                currentState.getRadius(),
+                currentState.getMass(),
+                currentState.getColor(),
+                currentState.getId()
+            );
+        }
 
-    public PhysicsBody(Body box2DBody, BodyState initialState) {
-        this.body = box2DBody;
-        this.currentState = initialState;
-    }
-
-    public void render(ShapeRenderer shapeRenderer) {
-        Vector2 position = body.getPosition();
-        float radius = currentState.getRadius();
-        Color color = currentState.getColor();
-
-        // Original rendering logic
-        shapeRenderer.setColor(color);
-        shapeRenderer.circle(position.x, position.y, radius);
-    }
-
-    public BodyState getCurrentState() {
-        return new BodyState(
-            body.getPosition(),
-            body.getLinearVelocity(),
-            currentState.getRadius(),
-            currentState.getMass(),
-            currentState.getColor(),
-            currentState.getId()
-        );
+    public PhysicsBody(PhysicsBody other) {
+        this.body = other.body; // Keep reference to Box2D body (optional)
+        this.currentState = other.getCurrentState(); // Copy immutable state
     }
 
     // Delegate methods

@@ -57,6 +57,14 @@ public class SimulationManager {
         if (toRemove != null) bodies.removeValue(toRemove, true);
     }
 
+    public Array<PhysicsBody> captureWorldState() {
+        Array<PhysicsBody> snapshot = new Array<>();
+        for (PhysicsBody body : bodies) {
+            snapshot.add(new PhysicsBody(body)); // Use copy constructor
+        }
+        return snapshot;
+    }
+
     private float calculateMass(float radius) {
         return (float) (Math.PI * radius * radius);
     }
