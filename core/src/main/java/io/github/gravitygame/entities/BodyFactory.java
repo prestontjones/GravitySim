@@ -30,6 +30,7 @@ public final class BodyFactory {
         BodyDef bodyDef = new BodyDef();
         bodyDef.type = BodyDef.BodyType.DynamicBody;
         bodyDef.position.set(state.getPosition());
+        bodyDef.linearVelocity.set(state.getVelocity());
 
         Body body = world.createBody(bodyDef);
         body.setUserData(state.getId());
@@ -42,7 +43,7 @@ public final class BodyFactory {
         fixtureDef.density = calculateDensity(state.getMass(), state.getRadius());
         fixtureDef.friction = 0;
         fixtureDef.restitution = 0.5f;
-        fixtureDef.isSensor = true;
+        // fixtureDef.isSensor = true;
 
         body.createFixture(fixtureDef);
         circle.dispose();

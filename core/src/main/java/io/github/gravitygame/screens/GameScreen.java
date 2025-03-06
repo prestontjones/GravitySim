@@ -20,7 +20,6 @@ import io.github.gravitygame.managers.UICreationManager;
 import io.github.gravitygame.managers.WorldStateManager;
 import io.github.gravitygame.physics.PhysicsRenderer;
 import io.github.gravitygame.physics.TrajectoryRenderer;
-import io.github.gravitygame.utils.WorldState;
 
 public class GameScreen implements Screen {
 
@@ -61,6 +60,10 @@ public class GameScreen implements Screen {
         // Initialize simulation, and WorldStateManager
         simulationManager = new SimulationManager();
         worldStateManager = new WorldStateManager();
+    
+        // Connect them
+        simulationManager.setWorldStateManager(worldStateManager);
+        worldStateManager.setSimulationManager(simulationManager);
 
         trajectoryRenderer = new TrajectoryRenderer(worldStateManager);
         trajectoryRenderer.setEnabled(true);
@@ -122,12 +125,10 @@ public class GameScreen implements Screen {
         // Update camera and simulation
         cameraController.update(delta);
         simulationManager.update(delta);
+        worldStateManager.update(delta);
+        physicsRenderer.update(delta);
         camera.update();
-
-        // Store the world state
-        WorldState currentWorldState = worldStateManager.createWorldState(simulationManager.getBodies());
-        worldStateManager.saveState(currentWorldState);
-
+    
         // Update body creation input
         Vector3 mousePos = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
         camera.unproject(mousePos);

@@ -1,11 +1,10 @@
 package io.github.gravitygame.physics;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Queue;
+import java.util.UUID;
 
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 
@@ -37,37 +36,52 @@ public class TrajectoryRenderer {
      * @param renderer The ShapeRenderer used for drawing.
      */
     public void renderTrajectories(ShapeRenderer renderer) {
-        if (!enabled) return;
+        if (!enabled || worldStateManager.isStabilizing()) return;
 
-        // Retrieve the entire history of world states.
-        List<WorldState> history = worldStateManager.getHistory();
-
-        // Map each body's id (as a String) to a list of positions.
-        Map<String, List<Vector2>> trajectories = new HashMap<>();
-
-        // Iterate over the history in chronological order.
-        for (WorldState state : history) {
-            for (BodyState bodyState : state.getBodyStates()) {
-                String id = bodyState.getId().toString();
-                if (!trajectories.containsKey(id)) {
-                    trajectories.put(id, new ArrayList<>());
-                }
-                trajectories.get(id).add(bodyState.getPosition());
-            }
-        }
-
-        // Draw each trajectory as a line connecting the saved positions.
         renderer.begin(ShapeRenderer.ShapeType.Line);
-        // Here we use yellow for all trajectories, or you could use a per-body color.
-        renderer.setColor(Color.YELLOW);
-        for (List<Vector2> path : trajectories.values()) {
-            if (path.size() < 2) continue;
-            for (int i = 0; i < path.size() - 1; i++) {
-                Vector2 p1 = path.get(i);
-                Vector2 p2 = path.get(i + 1);
-                renderer.line(p1.x, p1.y, p2.x, p2.y);
+        
+        // Use a stronger color for visibility
+        renderer.setColor(1.0f, 1.0f, 0, 0.8f); // Bright yellow
+
+        // Get all states from the queue
+        Queue<WorldState> history = worldStateManager.getHistoryQueue();
+        if (history.size() < 2) {
+            renderer.end();
+            return;
+        }
+        
+        WorldState[] historyArray = history.toArray(new WorldState[0]);
+        
+        // Create maps to track body positions across states
+        Map<UUID, Vector2[]> bodyPositions = new HashMap<>();
+        
+        // First, gather all positions for each body
+        for (int i = 0; i < historyArray.length; i++) {
+            for (BodyState body : historyArray[i].getBodyStates()) {
+                UUID id = body.getId();
+                
+                // Initialize the array for this body if it doesn't exist
+                if (!bodyPositions.containsKey(id)) {
+                    bodyPositions.put(id, new Vector2[historyArray.length]);
+                }
+                
+                // Store the position
+                bodyPositions.get(id)[i] = body.getPosition().cpy();
             }
         }
+        
+        // Now draw trajectories for each body
+        for (UUID id : bodyPositions.keySet()) {
+            Vector2[] positions = bodyPositions.get(id);
+            
+            // Draw a line between each consecutive non-null position
+            for (int i = 0; i < positions.length - 1; i++) {
+                if (positions[i] != null && positions[i+1] != null) {
+                    renderer.line(positions[i].x, positions[i].y, positions[i+1].x, positions[i+1].y);
+                }
+            }
+        }
+
         renderer.end();
     }
 }
