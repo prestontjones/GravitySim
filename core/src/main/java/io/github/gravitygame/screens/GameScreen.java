@@ -73,7 +73,7 @@ public class GameScreen implements Screen {
             simulationManager,
             simulationManager.getWorld(),
             camera,
-            1.0f
+            4.0f
         );
 
         // Initialize rendering

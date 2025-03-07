@@ -32,14 +32,14 @@ public class MainMenuScreen implements Screen {
 
         // Create buttons
         TextButton startButton = new TextButton("Start Game", skin);
-        TextButton settingsButton = new TextButton("Settings", skin);
+        // TextButton settingsButton = new TextButton("Settings", skin);
         TextButton githubButton = new TextButton("GitHub", skin);
 
         // Add buttons to the table
         table.add(startButton).width(400).height(100).padBottom(10);
         table.row();
-        table.add(settingsButton).width(400).height(100).padBottom(10);
-        table.row();
+        // table.add(settingsButton).width(400).height(100).padBottom(10);
+        // table.row();
         table.add(githubButton).width(400).height(100).padBottom(10);
 
         // Add button listeners
@@ -50,13 +50,13 @@ public class MainMenuScreen implements Screen {
             return true;
         });
 
-        settingsButton.addListener(event -> {
-            if (event.isHandled()) {
-                // TODO: Add logic to open the settings screen
-                Gdx.app.log("MainMenuScreen", "Settings button clicked");
-            }
-            return true;
-        });
+        // settingsButton.addListener(event -> {
+        //     if (event.isHandled()) {
+        //         // TODO: Add logic to open the settings screen
+        //         Gdx.app.log("MainMenuScreen", "Settings button clicked");
+        //     }
+        //     return true;
+        // });
 
         githubButton.addListener(event -> {
             if (event.isHandled()) {

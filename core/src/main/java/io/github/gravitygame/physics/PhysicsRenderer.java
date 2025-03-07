@@ -1,5 +1,7 @@
 package io.github.gravitygame.physics;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Array;
 
@@ -13,6 +15,7 @@ public class PhysicsRenderer {
     private boolean debugRenderCurrentState = false;
     private float timeSinceLastCycle = 0;
     private static final float CYCLE_INTERVAL = 0.05f; // Match the capture interval for smooth animation
+    private static final float LINE_THICKNESS = 2.0f; // Thicker lines for body outlines
 
     public PhysicsRenderer(WorldStateManager stateManager) {
         this.stateManager = stateManager;
@@ -35,15 +38,28 @@ public class PhysicsRenderer {
     }
 
     public void renderBodies(ShapeRenderer renderer, Array<PhysicsBody> currentBodies) {
+        // Set line width for thicker borders
+        Gdx.gl.glLineWidth(LINE_THICKNESS);
+        
+        // Enable blending for smoother lines
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        
         renderer.begin(ShapeRenderer.ShapeType.Line);
-
         renderPastState(renderer);
         
         if (debugRenderCurrentState) {
             renderCurrentState(renderer, currentBodies);
         }
-
         renderer.end();
+        
+        // Optional: Render filled circles under the outlines for a more polished look
+        renderer.begin(ShapeRenderer.ShapeType.Filled);
+        renderFilledBodies(renderer);
+        renderer.end();
+        
+        // Reset line width
+        Gdx.gl.glLineWidth(1.0f);
     }
 
     private void renderPastState(ShapeRenderer renderer) {
@@ -51,8 +67,27 @@ public class PhysicsRenderer {
         WorldState pastState = stateManager.getOldestState();
         if (pastState != null) {
             for (BodyState pastBody : pastState.getBodyStates()) {
-                renderer.setColor(pastBody.getColor());
+                // Enhanced color with slight glow effect (brighter)
+                float r = Math.min(1.0f, pastBody.getColor().r * 1.2f);
+                float g = Math.min(1.0f, pastBody.getColor().g * 1.2f);
+                float b = Math.min(1.0f, pastBody.getColor().b * 1.2f);
+                renderer.setColor(r, g, b, 1.0f);
                 renderer.circle(pastBody.getPosition().x, pastBody.getPosition().y, pastBody.getRadius());
+            }
+        }
+    }
+    
+    private void renderFilledBodies(ShapeRenderer renderer) {
+        // Render filled circles with lower alpha for a subtle effect
+        WorldState pastState = stateManager.getOldestState();
+        if (pastState != null) {
+            for (BodyState pastBody : pastState.getBodyStates()) {
+                // Use a slightly darker shade for the fill
+                float r = pastBody.getColor().r * 0.7f;
+                float g = pastBody.getColor().g * 0.7f;
+                float b = pastBody.getColor().b * 0.7f;
+                renderer.setColor(r, g, b, 0.3f); // Low alpha for subtle fill
+                renderer.circle(pastBody.getPosition().x, pastBody.getPosition().y, pastBody.getRadius() * 0.9f);
             }
         }
     }

@@ -100,7 +100,7 @@ public class BodyCreationController extends InputAdapter {
     }
 
     public float capMaximum(float value) {
-        float maxValue = 250f;
+        float maxValue = 500f;
         return Math.min(value, maxValue);
     }
     

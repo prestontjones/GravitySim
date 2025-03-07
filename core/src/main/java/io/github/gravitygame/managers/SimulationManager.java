@@ -107,7 +107,6 @@ public class SimulationManager {
         // Reset physics world time
         pause();
         simulationWorld.step(0f, 0, 0);
-    
         // Simulate exactly 60 steps
         for (int i = 0; i < WorldStateManager.MAX_STATES; i++) {
             GravityManager.updateGravity(bodies);

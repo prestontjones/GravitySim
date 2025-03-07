@@ -13,7 +13,7 @@ public class WorldStateManager {
     private final Queue<WorldState> stateQueue = new LinkedList<>();
     private SimulationManager simulationManager;
     private float timeSinceLastCapture = 0;
-    public static final float CAPTURE_INTERVAL = 0.05f;
+    public static final float CAPTURE_INTERVAL = 0.01f;
     public static final int MAX_STATES = 200;
 
     // Pointers to the most recent and the oldest states

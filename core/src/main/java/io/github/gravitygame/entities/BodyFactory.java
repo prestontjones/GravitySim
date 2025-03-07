@@ -43,7 +43,7 @@ public final class BodyFactory {
         fixtureDef.density = calculateDensity(state.getMass(), state.getRadius());
         fixtureDef.friction = 0;
         fixtureDef.restitution = 0.5f;
-        // fixtureDef.isSensor = true;
+        fixtureDef.isSensor = true;
 
         body.createFixture(fixtureDef);
         circle.dispose();
@@ -54,6 +54,6 @@ public final class BodyFactory {
     }
 
     private static float calculateDensity(float mass, float radius) {
-        return mass / (radius * radius * radius * (float) Math.PI);
+        return mass / (radius *radius * radius * (float) Math.PI);
     }
 }
