@@ -56,30 +56,33 @@ public class BodyCreationController extends InputAdapter {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        // Only process left clicks (button 0) for body creation
+        if (button != 0) return false;
+        
         if (!isActive()) return false;
 
-        Vector3 worldPos = camera.unproject(new Vector3(screenX, screenY, 0));
-        Vector2 mouseWorldPos = new Vector2(worldPos.x, worldPos.y);
+            Vector3 worldPos = camera.unproject(new Vector3(screenX, screenY, 0));
+            Vector2 mouseWorldPos = new Vector2(worldPos.x, worldPos.y);
 
-        switch (currentState) { 
-            case SETTING_POSITION:
-                data.setPosition(mouseWorldPos);
-                currentState = CreationState.SETTING_RADIUS;
-                break;
+            switch (currentState) { 
+                case SETTING_POSITION:
+                    data.setPosition(mouseWorldPos);
+                    currentState = CreationState.SETTING_RADIUS;
+                    break;
 
-            case SETTING_RADIUS:
-                data.setRadiusEnd(mouseWorldPos);
-                currentState = CreationState.SETTING_VELOCITY;
-                break;
+                case SETTING_RADIUS:
+                    data.setRadiusEnd(mouseWorldPos);
+                    currentState = CreationState.SETTING_VELOCITY;
+                    break;
 
-            case SETTING_VELOCITY:
-                data.setCurrentMouse(mouseWorldPos);
-                finalizeCreation();
-                break;
-                default:
-                break;
-        }
-        return true;
+                case SETTING_VELOCITY:
+                    data.setCurrentMouse(mouseWorldPos);
+                    finalizeCreation();
+                    break;
+                    default:
+                    break;
+            }
+            return true;
     }
 
     @Override

@@ -74,6 +74,11 @@ public class CameraController extends InputAdapter {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        // Only process left clicks (button 0) for camera panning
+        if (button != 0) {
+            return false;
+        }
+        
         if (stage.hit(screenX, screenY, true) == null) { // Check if the touch is outside the UI
             if (mode == CameraMode.PAN) {
                 lastTouch.set(screenX, screenY, 0);
@@ -100,6 +105,11 @@ public class CameraController extends InputAdapter {
 
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+        // Only process left clicks (button 0) for ending camera panning
+        if (button != 0) {
+            return false;
+        }
+        
         panningActive = false;
         return false; // Return false so UI and other processors can still receive the event
     }

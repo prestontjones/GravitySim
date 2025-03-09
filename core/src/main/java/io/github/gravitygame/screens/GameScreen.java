@@ -13,6 +13,7 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 import io.github.gravitygame.Main;
 import io.github.gravitygame.entities.BodyCreationController;
+import io.github.gravitygame.entities.BodyDeletionController;
 import io.github.gravitygame.managers.CameraController;
 import io.github.gravitygame.managers.SimulationManager;
 import io.github.gravitygame.managers.StarsManager;
@@ -33,7 +34,8 @@ public class GameScreen implements Screen {
     private UICreationManager uiCreationManager;
     private StarsManager starsManager;
     private Stage uiStage;
-    private TrajectoryRenderer trajectoryRenderer;
+    public TrajectoryRenderer trajectoryRenderer;
+    private BodyDeletionController bodyDeletionController;
 
     // Added WorldStateQueue for state tracking
     private WorldStateManager worldStateManager;
@@ -76,12 +78,24 @@ public class GameScreen implements Screen {
             4.0f
         );
 
+        // Initialize body deletion system
+        bodyDeletionController = new BodyDeletionController(simulationManager, worldStateManager, camera);
+
         // Initialize rendering
         shapeRenderer = new ShapeRenderer();
         physicsRenderer = new PhysicsRenderer(worldStateManager); // Pass world state queue
 
         // Initialize camera controller
         cameraController = new CameraController(camera, simulationManager, stage);
+    }
+
+    public void setTrajectoryMode(TrajectoryRenderer.PredictionMode mode) {
+        trajectoryRenderer.setPredictionMode(mode);
+        
+        // Configure the number of prediction points for estimation mode
+        if (mode == TrajectoryRenderer.PredictionMode.ESTIMATED) {
+            trajectoryRenderer.setEstimatedTrajectoryPoints(300); // Customize as needed
+        }
     }
 
     private void initializeUI() {
@@ -108,6 +122,7 @@ public class GameScreen implements Screen {
     private void setupInput() {
         InputMultiplexer multiplexer = new InputMultiplexer();
         multiplexer.addProcessor(uiStage);                     // UI first
+        multiplexer.addProcessor(bodyDeletionController); 
         multiplexer.addProcessor(bodyCreationController.getInputProcessor()); // Body creation
         multiplexer.addProcessor(cameraController);            // Camera controls
         Gdx.input.setInputProcessor(multiplexer);
@@ -148,7 +163,8 @@ public class GameScreen implements Screen {
         bodyCreationController.renderPreview(shapeRenderer);
         shapeRenderer.end();
 
-        trajectoryRenderer.renderTrajectories(shapeRenderer);
+        trajectoryRenderer.update(simulationManager.getBodies());
+        trajectoryRenderer.renderTrajectories(shapeRenderer, simulationManager.getBodies());
     }
 
     @Override

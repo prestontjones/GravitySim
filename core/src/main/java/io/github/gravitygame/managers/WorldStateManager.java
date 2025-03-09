@@ -162,6 +162,11 @@ public class WorldStateManager {
         stabilizationDelay = 0f;
     }
 
+    public void bodyRemoved() {
+        // Clear history and start capturing new states
+        clearHistory();
+    }
+
     public Queue<WorldState> getHistoryQueue() {
         return stateQueue; 
     }

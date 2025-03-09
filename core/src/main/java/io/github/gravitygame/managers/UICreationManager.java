@@ -10,21 +10,34 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Align;
 
+import io.github.gravitygame.Main;
 import io.github.gravitygame.entities.BodyCreationController;
+import io.github.gravitygame.physics.TrajectoryRenderer;
+import io.github.gravitygame.screens.GameScreen;
 import io.github.gravitygame.utils.PerformanceMonitor;
 
 public class UICreationManager {
+    // UI components
     private final Stage stage;
     private final Skin skin;
+    
+    // Game controllers
     private final SimulationManager simulationManager;
     private final BodyCreationController bodyCreationController;
     private final CameraController cameraController;
-    private final PerformanceMonitor performanceMonitor;
     
+    // Performance monitoring
+    private final PerformanceMonitor performanceMonitor;
     private Label fpsLabel;
     private Label frameTimeLabel;
+    
+    // UI tables
+    private Table controlsTable;
+    private Table performanceTable;
 
-    // Constructor
+    /**
+     * Constructor for UICreationManager
+     */
     public UICreationManager(Stage stage, SimulationManager simulationManager, 
                              BodyCreationController bodyCreationController, CameraController cameraController) {
         this.stage = stage;
@@ -35,41 +48,43 @@ public class UICreationManager {
         this.performanceMonitor = new PerformanceMonitor();
     }
 
-    // Setup UI elements and listeners
+    /**
+     * Initialize and setup all UI elements
+     */
     public void setupUI() {
         Gdx.app.log("UI", "Setting up UI elements");
-
-        // Create a table for layout
-        Table table = new Table();
-        table.setFillParent(true);
-        table.top().right();
-        stage.addActor(table);
-
-        // Create performance monitor labels
+        
+        // Initialize tables
+        setupTables();
+        
+        // Setup UI components
         setupPerformanceUI();
-
-        // Create UI buttons
-        TextButton pauseButton = createPauseButton();
-        TextButton cameraModeButton = createCameraModeButton();
-        TextButton createBodyButton = createCreateBodyButton();
-
-        // Add buttons to table with layout specifications
-        table.add(pauseButton).width(200).height(100).padTop(10).padRight(10);
-        table.row();
-        table.add(cameraModeButton).width(200).height(100).padTop(10).padRight(10);
-        table.row();
-        table.add(createBodyButton).width(200).height(100).padTop(10).padRight(10);
-
+        setupControlButtons();
+        
         Gdx.app.log("UI", "UI setup complete");
     }
     
-    // Setup performance monitoring UI
-    private void setupPerformanceUI() {
-        Table perfTable = new Table();
-        perfTable.setFillParent(true);
-        perfTable.top().left();
-        stage.addActor(perfTable);
+    /**
+     * Create and configure UI tables
+     */
+    private void setupTables() {
+        // Main controls table (right side)
+        controlsTable = new Table();
+        controlsTable.setFillParent(true);
+        controlsTable.top().right();
+        stage.addActor(controlsTable);
         
+        // Performance metrics table (left side)
+        performanceTable = new Table();
+        performanceTable.setFillParent(true);
+        performanceTable.top().left();
+        stage.addActor(performanceTable);
+    }
+    
+    /**
+     * Setup performance monitoring UI components
+     */
+    private void setupPerformanceUI() {
         // Create labels for FPS and Frame Time
         fpsLabel = new Label("FPS: 0", skin);
         frameTimeLabel = new Label("Frame Time: 0.0 ms", skin);
@@ -79,12 +94,39 @@ public class UICreationManager {
         frameTimeLabel.setAlignment(Align.left);
         
         // Add labels to the performance table
-        perfTable.add(fpsLabel).padTop(10).padLeft(10).left();
-        perfTable.row();
-        perfTable.add(frameTimeLabel).padTop(5).padLeft(10).left();
+        performanceTable.add(fpsLabel).padTop(10).padLeft(10).left();
+        performanceTable.row();
+        performanceTable.add(frameTimeLabel).padTop(5).padLeft(10).left();
     }
 
-    // Create the Pause Button and add listener
+    /**
+     * Setup all control buttons
+     */
+    private void setupControlButtons() {
+        // Create buttons
+        TextButton pauseButton = createPauseButton();
+        TextButton cameraModeButton = createCameraModeButton();
+        TextButton createBodyButton = createCreateBodyButton();
+        TextButton trajectoryModeButton = createTrajectoryModeButton();
+        
+        // Standard button configuration
+        int buttonWidth = 200;
+        int buttonHeight = 100;
+        int buttonPadding = 10;
+        
+        // Add buttons to controls table
+        controlsTable.add(pauseButton).width(buttonWidth).height(buttonHeight).pad(buttonPadding);
+        controlsTable.row();
+        controlsTable.add(cameraModeButton).width(buttonWidth).height(buttonHeight).pad(buttonPadding);
+        controlsTable.row();
+        controlsTable.add(createBodyButton).width(buttonWidth).height(buttonHeight).pad(buttonPadding);
+        controlsTable.row();
+        controlsTable.add(trajectoryModeButton).width(buttonWidth).height(buttonHeight).pad(buttonPadding);
+    }
+
+    /**
+     * Create the Pause/Resume button
+     */
     private TextButton createPauseButton() {
         TextButton pauseButton = new TextButton("Pause", skin);
         pauseButton.addListener(new ChangeListener() {
@@ -98,51 +140,71 @@ public class UICreationManager {
         return pauseButton;
     }
 
-    // Create the Camera Mode Button and add listener
+    /**
+     * Create the Camera Mode toggle button
+     */
     private TextButton createCameraModeButton() {
         TextButton cameraModeButton = new TextButton("Camera: Follow", skin);
         cameraModeButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                toggleCameraMode(cameraModeButton);
+                CameraController.CameraMode newMode = (cameraController.getMode() == CameraController.CameraMode.FOLLOW)
+                        ? CameraController.CameraMode.PAN
+                        : CameraController.CameraMode.FOLLOW;
+                cameraController.setMode(newMode);
+                cameraModeButton.setText("Camera: " + (newMode == CameraController.CameraMode.PAN ? "Pan" : "Follow"));
             }
         });
         return cameraModeButton;
     }
 
-    // Create the Create Body Button and add listener
+    /**
+     * Create the Planet Creation toggle button
+     */
     private TextButton createCreateBodyButton() {
         TextButton createBodyButton = new TextButton("Create Planets", skin);
         createBodyButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                toggleBodyCreationMode(createBodyButton);
+                if (!bodyCreationController.isActive()) {
+                    bodyCreationController.startCreation();
+                    createBodyButton.setText("Cancel Creation Mode");
+                } else {
+                    bodyCreationController.cancelCreation();
+                    createBodyButton.setText("Create Planets");
+                }
             }
         });
         return createBodyButton;
     }
-
-    // Toggle between Follow and Pan camera modes
-    private void toggleCameraMode(TextButton cameraModeButton) {
-        CameraController.CameraMode newMode = (cameraController.getMode() == CameraController.CameraMode.FOLLOW)
-                ? CameraController.CameraMode.PAN
-                : CameraController.CameraMode.FOLLOW;
-        cameraController.setMode(newMode);
-        cameraModeButton.setText("Camera: " + (newMode == CameraController.CameraMode.PAN ? "Pan" : "Follow"));
+    
+    /**
+     * Create the Trajectory Mode toggle button
+     */
+    private TextButton createTrajectoryModeButton() {
+        TextButton trajectoryModeBtn = new TextButton("Trajectory: Historical", skin);
+        trajectoryModeBtn.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                GameScreen gameScreen = (GameScreen)((Main)Gdx.app.getApplicationListener()).getScreen();
+                TrajectoryRenderer.PredictionMode currentMode = gameScreen.trajectoryRenderer.getPredictionMode();
+                
+                // Toggle between modes
+                if (currentMode == TrajectoryRenderer.PredictionMode.HISTORICAL) {
+                    gameScreen.setTrajectoryMode(TrajectoryRenderer.PredictionMode.ESTIMATED);
+                    trajectoryModeBtn.setText("Trajectory: Estimated");
+                } else {
+                    gameScreen.setTrajectoryMode(TrajectoryRenderer.PredictionMode.HISTORICAL);
+                    trajectoryModeBtn.setText("Trajectory: Historical");
+                }
+            }
+        });
+        return trajectoryModeBtn;
     }
 
-    // Toggle body creation mode
-    private void toggleBodyCreationMode(TextButton createBodyButton) {
-        if (!bodyCreationController.isActive()) {
-            bodyCreationController.startCreation();
-            createBodyButton.setText("Cancel Creation Mode");
-        } else {
-            bodyCreationController.cancelCreation();
-            createBodyButton.setText("Create Planets");
-        }
-    }
-
-    // Update performance metrics
+    /**
+     * Update performance metrics display
+     */
     private void updatePerformanceMetrics() {
         performanceMonitor.update();
         
@@ -151,19 +213,25 @@ public class UICreationManager {
         frameTimeLabel.setText(String.format("Frame Time: %.2f ms", performanceMonitor.getAverageFrameTime()));
     }
 
-    // Render the UI
+    /**
+     * Update and render the UI
+     */
     public void render(float delta) {
         updatePerformanceMetrics();
         stage.act(delta);
         stage.draw();
     }
 
-    // Getter for the stage
+    /**
+     * Getter for the stage
+     */
     public Stage getStage() {
         return stage;
     }
 
-    // Dispose resources
+    /**
+     * Dispose resources
+     */
     public void dispose() {
         skin.dispose();
     }

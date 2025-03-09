@@ -120,16 +120,71 @@ public class SimulationManager {
         resume();
     }
 
+    // Add this method to SimulationManager.java
+public PhysicsBody findBodyAtPosition(Vector2 position) {
+    for (PhysicsBody body : bodies) {
+        Vector2 bodyPosition = body.getBody().getPosition();
+        float radius = body.getRadius();
+        
+        // Check if the click position is within the body's radius
+        if (position.dst(bodyPosition) <= radius) {
+            return body;
+        }
+    }
+    return null;
+}
+
     public void removeBody(UUID id) {
+        // Find the body to remove
         PhysicsBody toRemove = null;
         for (PhysicsBody body : bodies) {
             if (body.getId().equals(id)) {
-                simulationWorld.destroyBody(body.getBody());
                 toRemove = body;
                 break;
             }
         }
-        if (toRemove != null) bodies.removeValue(toRemove, true);
+        
+        if (toRemove != null) {
+            // 1. Pause the simulation
+            boolean wasPaused = isPaused;
+            pause();
+            
+            // 2. Remove the body from the physics world and our array
+            System.out.println("Removing body: " + toRemove.getId());
+            simulationWorld.destroyBody(toRemove.getBody());
+            bodies.removeValue(toRemove, true);
+            
+            // 3. Make the current state with remaining bodies the new simulation state
+            WorldState newCurrentState = new WorldState();
+            for (PhysicsBody body : bodies) {
+                newCurrentState.addBodyState(new BodyState(
+                    body.getPosition(),
+                    body.getVelocity(),
+                    body.getRadius(),
+                    body.getMass(),
+                    body.getColor(),
+                    body.getId()
+                ));
+            }
+            
+            // 4. Clear the WorldStateManager's queue
+            worldStateManager.clearHistory();
+            
+            // 5. Start recalculating with the missing body
+            // First make sure we're in a stable state by using the current state
+            // No need to reset to state since we've just removed the body directly
+            // Generate trajectory from this point forward
+            // The fast-forward will populate the state queue with new trajectory data
+            fastForwardToPresent();
+            
+            // 6. Notify WorldStateManager about the removal
+            worldStateManager.bodyRemoved();
+            
+            // 7. Resume if it wasn't paused before
+            if (!wasPaused) {
+                resume();
+            }
+        }
     }
 
     public Array<PhysicsBody> captureWorldState() {
@@ -141,9 +196,11 @@ public class SimulationManager {
     }
 
     public void resume() {
-        isPaused = false;
-        accumulatedTime = 0f; // Reset physics timing
-        Gdx.app.log("Simulation Manager Resume", isPaused ? "Game Paused" : "Game Unpaused");
+        if (isPaused) {
+            isPaused = false;
+            accumulatedTime = 0f; // Reset physics timing
+            Gdx.app.log("Simulation Manager Resume", isPaused ? "Game Paused" : "Game Unpaused");
+        }
     }
 
     public void pause() {
