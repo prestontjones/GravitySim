@@ -89,14 +89,6 @@ public class GameScreen implements Screen {
         cameraController = new CameraController(camera, simulationManager, stage);
     }
 
-    public void setTrajectoryMode(TrajectoryRenderer.PredictionMode mode) {
-        trajectoryRenderer.setPredictionMode(mode);
-        
-        // Configure the number of prediction points for estimation mode
-        if (mode == TrajectoryRenderer.PredictionMode.ESTIMATED) {
-            trajectoryRenderer.setEstimatedTrajectoryPoints(300); // Customize as needed
-        }
-    }
 
     private void initializeUI() {
         // Create UI stage
@@ -163,7 +155,6 @@ public class GameScreen implements Screen {
         bodyCreationController.renderPreview(shapeRenderer);
         shapeRenderer.end();
 
-        trajectoryRenderer.update(simulationManager.getBodies());
         trajectoryRenderer.renderTrajectories(shapeRenderer, simulationManager.getBodies());
     }
 

@@ -10,10 +10,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Align;
 
-import io.github.gravitygame.Main;
 import io.github.gravitygame.entities.BodyCreationController;
-import io.github.gravitygame.physics.TrajectoryRenderer;
-import io.github.gravitygame.screens.GameScreen;
 import io.github.gravitygame.utils.PerformanceMonitor;
 
 public class UICreationManager {
@@ -107,7 +104,6 @@ public class UICreationManager {
         TextButton pauseButton = createPauseButton();
         TextButton cameraModeButton = createCameraModeButton();
         TextButton createBodyButton = createCreateBodyButton();
-        TextButton trajectoryModeButton = createTrajectoryModeButton();
         
         // Standard button configuration
         int buttonWidth = 200;
@@ -121,7 +117,6 @@ public class UICreationManager {
         controlsTable.row();
         controlsTable.add(createBodyButton).width(buttonWidth).height(buttonHeight).pad(buttonPadding);
         controlsTable.row();
-        controlsTable.add(trajectoryModeButton).width(buttonWidth).height(buttonHeight).pad(buttonPadding);
     }
 
     /**
@@ -176,30 +171,6 @@ public class UICreationManager {
             }
         });
         return createBodyButton;
-    }
-    
-    /**
-     * Create the Trajectory Mode toggle button
-     */
-    private TextButton createTrajectoryModeButton() {
-        TextButton trajectoryModeBtn = new TextButton("Trajectory: Historical", skin);
-        trajectoryModeBtn.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                GameScreen gameScreen = (GameScreen)((Main)Gdx.app.getApplicationListener()).getScreen();
-                TrajectoryRenderer.PredictionMode currentMode = gameScreen.trajectoryRenderer.getPredictionMode();
-                
-                // Toggle between modes
-                if (currentMode == TrajectoryRenderer.PredictionMode.HISTORICAL) {
-                    gameScreen.setTrajectoryMode(TrajectoryRenderer.PredictionMode.ESTIMATED);
-                    trajectoryModeBtn.setText("Trajectory: Estimated");
-                } else {
-                    gameScreen.setTrajectoryMode(TrajectoryRenderer.PredictionMode.HISTORICAL);
-                    trajectoryModeBtn.setText("Trajectory: Historical");
-                }
-            }
-        });
-        return trajectoryModeBtn;
     }
 
     /**

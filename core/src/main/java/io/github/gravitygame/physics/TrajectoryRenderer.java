@@ -20,7 +20,6 @@ public class TrajectoryRenderer {
     // Toggle to enable/disable trajectory rendering.
     private boolean enabled = false;
     private final WorldStateManager worldStateManager;
-    private TrajectoryEstimator estimator;
     private static final float TRAJECTORY_THICKNESS = 2.5f; // Thicker lines for trajectories
     
     // Colors for gradient effect
@@ -37,7 +36,6 @@ public class TrajectoryRenderer {
 
     public TrajectoryRenderer(WorldStateManager manager) {
         this.worldStateManager = manager;
-        this.estimator = new TrajectoryEstimator();
     }
     
     public void setEnabled(boolean enabled) {
@@ -55,23 +53,6 @@ public class TrajectoryRenderer {
     public PredictionMode getPredictionMode() {
         return currentMode;
     }
-    
-    /**
-     * Updates the trajectory estimator with current body data.
-     * Call this in your update loop.
-     */
-    public void update(Array<PhysicsBody> currentBodies) {
-        if (currentMode == PredictionMode.ESTIMATED) {
-            estimator.updateTrajectories(currentBodies);
-        }
-    }
-    
-    /**
-     * Configure how many points to calculate in the estimated trajectory.
-     */
-    public void setEstimatedTrajectoryPoints(int points) {
-        estimator.setTrajectoryPoints(points);
-    }
 
     /**
      * Renders trajectories for each body using either the historical or estimated mode.
@@ -80,16 +61,7 @@ public class TrajectoryRenderer {
      * @param currentBodies The current bodies in the simulation (used for estimation mode).
      */
     public void renderTrajectories(ShapeRenderer renderer, Array<PhysicsBody> currentBodies) {
-        if (!enabled) return;
-        
-        switch (currentMode) {
-            case HISTORICAL:
-                renderHistoricalTrajectories(renderer);
-                break;
-            case ESTIMATED:
-                renderEstimatedTrajectories(renderer, currentBodies);
-                break;
-        }
+        renderHistoricalTrajectories(renderer);
     }
     
     /**
@@ -177,60 +149,6 @@ public class TrajectoryRenderer {
             }
         }
 
-        renderer.end();
-        
-        // Reset line width to default
-        Gdx.gl.glLineWidth(1.0f);
-    }
-    
-    /**
-     * New estimated trajectory rendering using TrajectoryEstimator.
-     */
-    private void renderEstimatedTrajectories(ShapeRenderer renderer, Array<PhysicsBody> currentBodies) {
-        // Ensure trajectories are up to date
-        estimator.updateTrajectories(currentBodies);
-        
-        // Set line width and blending
-        Gdx.gl.glLineWidth(TRAJECTORY_THICKNESS);
-        Gdx.gl.glEnable(GL20.GL_BLEND);
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-        
-        renderer.begin(ShapeRenderer.ShapeType.Line);
-        
-        // Get all trajectories
-        Map<UUID, Array<Vector2>> trajectories = estimator.getAllTrajectories();
-        
-        // Draw each body's trajectory
-        for (PhysicsBody body : currentBodies) {
-            UUID id = body.getId();
-            Array<Vector2> points = trajectories.get(id);
-            
-            if (points != null && points.size > 1) {
-                float[] color = {
-                    body.getColor().r,
-                    body.getColor().g,
-                    body.getColor().b,
-                    0.8f
-                };
-                
-                // Draw lines between points with gradient effect
-                for (int i = 0; i < points.size - 1; i++) {
-                    // Create gradient effect - older segments fade out
-                    float segmentProgress = (float)i / (points.size - 2);
-                    
-                    // Custom color with gradient effect
-                    renderer.setColor(
-                        color[0],
-                        color[1],
-                        color[2],
-                        0.9f - (0.6f * segmentProgress) // Fade out future segments
-                    );
-                    
-                    renderer.line(points.get(i), points.get(i+1));
-                }
-            }
-        }
-        
         renderer.end();
         
         // Reset line width to default
