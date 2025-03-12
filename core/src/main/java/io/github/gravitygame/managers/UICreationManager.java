@@ -104,6 +104,7 @@ public class UICreationManager {
         TextButton pauseButton = createPauseButton();
         TextButton cameraModeButton = createCameraModeButton();
         TextButton createBodyButton = createCreateBodyButton();
+        TextButton createOrbiterButton = createOrbiterButton();  // New button
         
         // Standard button configuration
         int buttonWidth = 200;
@@ -117,6 +118,28 @@ public class UICreationManager {
         controlsTable.row();
         controlsTable.add(createBodyButton).width(buttonWidth).height(buttonHeight).pad(buttonPadding);
         controlsTable.row();
+        controlsTable.add(createOrbiterButton).width(buttonWidth).height(buttonHeight).pad(buttonPadding);
+        controlsTable.row();
+    }
+
+    /**
+     * Create the Add Orbiter button
+     */
+    private TextButton createOrbiterButton() {
+        TextButton createOrbiterButton = new TextButton("Add Orbiter", skin);
+        createOrbiterButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                if (!bodyCreationController.isActive()) {
+                    bodyCreationController.startOrbiterCreation();
+                    createOrbiterButton.setText("Cancel Orbiter Mode");
+                } else {
+                    bodyCreationController.cancelCreation();
+                    createOrbiterButton.setText("Add Orbiter");
+                }
+            }
+        });
+        return createOrbiterButton;
     }
 
     /**
