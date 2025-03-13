@@ -16,9 +16,11 @@ import io.github.gravitygame.entities.BodyCreationController;
 import io.github.gravitygame.entities.BodyDeletionController;
 import io.github.gravitygame.managers.CameraController;
 import io.github.gravitygame.managers.SimulationManager;
+import io.github.gravitygame.managers.SoundManager;
 import io.github.gravitygame.managers.StarsManager;
 import io.github.gravitygame.managers.UICreationManager;
 import io.github.gravitygame.managers.WorldStateManager;
+import io.github.gravitygame.physics.CollisionManager;
 import io.github.gravitygame.physics.PhysicsRenderer;
 import io.github.gravitygame.physics.TrajectoryRenderer;
 
@@ -36,6 +38,7 @@ public class GameScreen implements Screen {
     private Stage uiStage;
     public TrajectoryRenderer trajectoryRenderer;
     private BodyDeletionController bodyDeletionController;
+    private CollisionManager collisionManager;
 
     // Added WorldStateQueue for state tracking
     private WorldStateManager worldStateManager;
@@ -50,7 +53,9 @@ public class GameScreen implements Screen {
         initializeCoreSystems();
         initializeUI();
         initializeStars();
+        collisionManager = new CollisionManager(worldStateManager);
         setupInput();
+        SoundManager.getInstance().startGameMusic();
     }
 
     private void initializeCoreSystems() {
@@ -84,7 +89,7 @@ public class GameScreen implements Screen {
         // Initialize rendering
         shapeRenderer = new ShapeRenderer();
         physicsRenderer = new PhysicsRenderer(worldStateManager); // Pass world state queue
-
+        
         // Initialize camera controller
         cameraController = new CameraController(camera, simulationManager, stage);
     }
@@ -134,6 +139,7 @@ public class GameScreen implements Screen {
         simulationManager.update(delta);
         worldStateManager.update(delta);
         physicsRenderer.update(delta);
+        collisionManager.update();
         camera.update();
     
         // Update body creation input

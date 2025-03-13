@@ -3,6 +3,7 @@ package io.github.gravitygame.managers;
 import java.util.UUID;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Array;
@@ -41,7 +42,7 @@ public class SimulationManager {
         }
     }
 
-    public void addBody(float x, float y, float radius, Vector2 velocity) {
+    public void addBody(float x, float y, float radius, Vector2 velocity, Color color) {
         WorldState oldestState = worldStateManager.getOldestState();
     
         if (oldestState != null) {
@@ -57,7 +58,8 @@ public class SimulationManager {
                 velocity,
                 x, y,
                 radius,
-                calculateMass(radius)
+                calculateMass(radius),
+                color
             );
             bodies.add(newBody);
     
@@ -74,7 +76,8 @@ public class SimulationManager {
                 velocity,
                 x, y,
                 radius,
-                calculateMass(radius)
+                calculateMass(radius),
+                color
             );
             bodies.add(body);
             
@@ -97,7 +100,8 @@ public class SimulationManager {
                 bodyState.getVelocity(),
                 bodyState.getPosition().x, bodyState.getPosition().y,
                 bodyState.getRadius(),
-                bodyState.getMass()
+                bodyState.getMass(),
+                bodyState.getColor()
             );
             bodies.add(body);
         }

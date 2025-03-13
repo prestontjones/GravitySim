@@ -25,8 +25,7 @@ public class WorldStateManager {
     
     // Add a flag to pause cycling after adding a new body
     private float stabilizationDelay = 0f;
-    private static final float STABILIZATION_TIME = 0.5f; // Half second delay
-
+    private static final float STABILIZATION_TIME = 0f; // Delay
     public void setSimulationManager(SimulationManager manager) {
         this.simulationManager = manager;
     }

@@ -2,18 +2,18 @@ package io.github.gravitygame.entities;
 
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.World;
-import com.badlogic.gdx.utils.Array;
 
 import io.github.gravitygame.managers.SimulationManager;
-import io.github.gravitygame.physics.GravityManager;
 
 public class BodyCreationController extends InputAdapter {
-    public enum CreationState { INACTIVE, SETTING_POSITION, SETTING_RADIUS, SETTING_VELOCITY, SELECTING_PRIMARY }
+    public enum CreationState { INACTIVE, SETTING_POSITION, SETTING_RADIUS, SETTING_VELOCITY}
 
     private final SimulationManager simulationManager;
     private final BodyPreviewRenderer previewRenderer;
@@ -40,8 +40,6 @@ public class BodyCreationController extends InputAdapter {
             // Cannot create an orbiter if there are no primary bodies
             return;
         }
-        
-        currentState = CreationState.SELECTING_PRIMARY;
         data.reset();
     }
 
@@ -61,57 +59,9 @@ public class BodyCreationController extends InputAdapter {
         float rawDistance = data.getPosition().dst(data.getRadiusEnd());
         float radius = capMaximum(rawDistance);
         Vector2 velocity = data.getCurrentMouse().cpy().sub(data.getPosition()).scl(velocityScale);
-
-        simulationManager.addBody(data.getPosition().x, data.getPosition().y, radius, velocity);
+       Color randomColor = new Color(MathUtils.random(), MathUtils.random(), MathUtils.random(), 1f);
+        simulationManager.addBody(data.getPosition().x, data.getPosition().y, radius, velocity, randomColor);
         startCreation();
-    }
-
-    private PhysicsBody findNearestSignificantBody(Vector2 position) {
-        PhysicsBody nearest = null;
-        float minDistance = Float.MAX_VALUE;
-        Array<PhysicsBody> bodies = simulationManager.getBodies();
-        
-        for (PhysicsBody body : bodies) {
-            float distance = body.getPosition().dst(position);
-            // Consider both distance and mass when finding "significant" bodies
-            float significance = distance / (body.getMass() * 0.1f);
-            
-            if (significance < minDistance) {
-                minDistance = significance;
-                nearest = body;
-            }
-        }
-        
-        return nearest;
-    }
-
-    private void createOrbiter(PhysicsBody primaryBody) {
-        // Validate primary body exists
-        if (primaryBody == null || primaryBody.getBody() == null) return;
-    
-        // Calculate safe spawn distance
-        float safeDistance = primaryBody.getRadius() * 2 + 50f; // 2x radius + buffer
-        Vector2 spawnPos = primaryBody.getPosition().cpy()
-            .add(new Vector2(safeDistance, 0).rotateDeg((float)Math.random() * 360f));
-    
-        // Create body with initial velocity
-        simulationManager.addBody(
-            spawnPos.x, 
-            spawnPos.y, 
-            primaryBody.getRadius() * 0.2f, 
-            new Vector2(0, 0) // Will be set by setupDynamicOrbit
-        );
-    
-        // Get reference safely
-        PhysicsBody newBody = simulationManager.getBodies()
-            .peek(); // Get last added body
-    
-        if (newBody != null) {
-            GravityManager.setupDynamicOrbit(newBody, primaryBody);
-            // Ensure valid physics state
-            newBody.getBody().setTransform(spawnPos, 0);
-            newBody.getBody().setAwake(true);
-        }
     }
 
     @Override
@@ -138,15 +88,6 @@ public class BodyCreationController extends InputAdapter {
             case SETTING_VELOCITY:
                 data.setCurrentMouse(mouseWorldPos);
                 finalizeCreation();
-                break;
-                
-            case SELECTING_PRIMARY:
-                // Find the nearest significant body to the click position
-                PhysicsBody primaryBody = findNearestSignificantBody(mouseWorldPos);
-                if (primaryBody != null) {
-                    createOrbiter(primaryBody);
-                    currentState = CreationState.INACTIVE;
-                }
                 break;
                 
             default:

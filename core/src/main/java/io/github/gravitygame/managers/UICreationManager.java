@@ -5,15 +5,19 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Slider;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Disposable;
 
 import io.github.gravitygame.entities.BodyCreationController;
 import io.github.gravitygame.utils.PerformanceMonitor;
 
-public class UICreationManager {
+public class UICreationManager implements Disposable {
+    private static final String TAG = "UIManager";
+    
     // UI components
     private final Stage stage;
     private final Skin skin;
@@ -31,6 +35,8 @@ public class UICreationManager {
     // UI tables
     private Table controlsTable;
     private Table performanceTable;
+    private Table soundControlsTable;
+
 
     /**
      * Constructor for UICreationManager
@@ -43,13 +49,16 @@ public class UICreationManager {
         this.cameraController = cameraController;
         this.skin = new Skin(Gdx.files.internal("skin/neon-ui.json"));
         this.performanceMonitor = new PerformanceMonitor();
+        
+        // Initialize the SoundManager - this should be done early
+        SoundManager.getInstance().initialize();
     }
 
     /**
      * Initialize and setup all UI elements
      */
     public void setupUI() {
-        Gdx.app.log("UI", "Setting up UI elements");
+        Gdx.app.log(TAG, "Setting up UI elements");
         
         // Initialize tables
         setupTables();
@@ -58,7 +67,7 @@ public class UICreationManager {
         setupPerformanceUI();
         setupControlButtons();
         
-        Gdx.app.log("UI", "UI setup complete");
+        Gdx.app.log(TAG, "UI setup complete");
     }
     
     /**
@@ -69,13 +78,22 @@ public class UICreationManager {
         controlsTable = new Table();
         controlsTable.setFillParent(true);
         controlsTable.top().right();
+        controlsTable.pad(10);
         stage.addActor(controlsTable);
         
         // Performance metrics table (left side)
         performanceTable = new Table();
         performanceTable.setFillParent(true);
         performanceTable.top().left();
+        performanceTable.pad(10);
         stage.addActor(performanceTable);
+        
+        // Sound controls table (bottom right)
+        soundControlsTable = new Table();
+        soundControlsTable.setFillParent(true);
+        soundControlsTable.bottom().right();
+        soundControlsTable.pad(10);
+        stage.addActor(soundControlsTable);
     }
     
     /**
@@ -100,15 +118,14 @@ public class UICreationManager {
      * Setup all control buttons
      */
     private void setupControlButtons() {
-        // Create buttons
+        // Create main control buttons
         TextButton pauseButton = createPauseButton();
         TextButton cameraModeButton = createCameraModeButton();
         TextButton createBodyButton = createCreateBodyButton();
-        TextButton createOrbiterButton = createOrbiterButton();  // New button
         
         // Standard button configuration
         int buttonWidth = 200;
-        int buttonHeight = 100;
+        int buttonHeight = 70;
         int buttonPadding = 10;
         
         // Add buttons to controls table
@@ -118,28 +135,65 @@ public class UICreationManager {
         controlsTable.row();
         controlsTable.add(createBodyButton).width(buttonWidth).height(buttonHeight).pad(buttonPadding);
         controlsTable.row();
-        controlsTable.add(createOrbiterButton).width(buttonWidth).height(buttonHeight).pad(buttonPadding);
-        controlsTable.row();
+        
+        // Set up sound controls separately
+        setupSoundControls(buttonWidth, buttonHeight, buttonPadding);
+    }
+
+    private void setupSoundControls(int buttonWidth, int buttonHeight, int buttonPadding) {
+        // Create sound control buttons
+        TextButton toggleMusicButton = createToggleMusicButton();
+        
+        // Create volume slider
+        Label volumeLabel = new Label("Volume:", skin);
+        Slider volumeSlider = createVolumeSlider();
+        
+        // Create a sub-table for volume controls
+        Table volumeControlTable = new Table();
+        volumeControlTable.add(volumeLabel).padRight(10);
+        volumeControlTable.add(volumeSlider).width(buttonWidth - 70);
+        
+        // Add elements to sound controls table
+        soundControlsTable.add(volumeControlTable).width(buttonWidth).height(buttonHeight).pad(buttonPadding);
+        soundControlsTable.row();
+        soundControlsTable.add(toggleMusicButton).width(buttonWidth).height(buttonHeight).pad(buttonPadding);
+    }
+
+    private Slider createVolumeSlider() {
+        Slider slider = new Slider(0f, 1f, 0.01f, false, skin);
+        slider.setValue(0.7f); // Set default volume
+        
+        // Set initial volume
+        SoundManager.getInstance().setVolume(slider.getValue());
+        
+        slider.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                float volume = slider.getValue();
+                SoundManager.getInstance().setVolume(volume);
+                Gdx.app.log("UI", "Volume changed to: " + volume);
+            }
+        });
+        
+        return slider;
     }
 
     /**
-     * Create the Add Orbiter button
+     * Create a button to toggle game music
      */
-    private TextButton createOrbiterButton() {
-        TextButton createOrbiterButton = new TextButton("Add Orbiter", skin);
-        createOrbiterButton.addListener(new ChangeListener() {
+    private TextButton createToggleMusicButton() {
+        TextButton button = new TextButton("Toggle Music", skin);
+        button.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                if (!bodyCreationController.isActive()) {
-                    bodyCreationController.startOrbiterCreation();
-                    createOrbiterButton.setText("Cancel Orbiter Mode");
-                } else {
-                    bodyCreationController.cancelCreation();
-                    createOrbiterButton.setText("Add Orbiter");
-                }
+                SoundManager.getInstance().playClickSound();
+                // Start or stop music
+                SoundManager soundManager = SoundManager.getInstance();
+                soundManager.stopAllMusic();
+                soundManager.startGameMusic();
             }
         });
-        return createOrbiterButton;
+        return button;
     }
 
     /**
@@ -150,6 +204,7 @@ public class UICreationManager {
         pauseButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
+                SoundManager.getInstance().playClickSound();
                 simulationManager.togglePause();
                 Gdx.app.log("UI", "Pause Button Clicked");
                 pauseButton.setText(simulationManager.isPaused() ? "Resume" : "Pause");
@@ -166,6 +221,7 @@ public class UICreationManager {
         cameraModeButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
+                SoundManager.getInstance().playClickSound();
                 CameraController.CameraMode newMode = (cameraController.getMode() == CameraController.CameraMode.FOLLOW)
                         ? CameraController.CameraMode.PAN
                         : CameraController.CameraMode.FOLLOW;
@@ -184,6 +240,7 @@ public class UICreationManager {
         createBodyButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
+                SoundManager.getInstance().playClickSound();
                 if (!bodyCreationController.isActive()) {
                     bodyCreationController.startCreation();
                     createBodyButton.setText("Cancel Creation Mode");
@@ -226,7 +283,9 @@ public class UICreationManager {
     /**
      * Dispose resources
      */
+    @Override
     public void dispose() {
         skin.dispose();
+        SoundManager.getInstance().dispose();
     }
 }

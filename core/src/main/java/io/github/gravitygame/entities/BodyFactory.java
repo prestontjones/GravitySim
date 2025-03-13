@@ -13,13 +13,13 @@ import com.badlogic.gdx.physics.box2d.World;
 public final class BodyFactory {
     private BodyFactory() {} // Static utility
 
-    public static PhysicsBody createBody(World world, Vector2 velocity, float x, float y, float radius, float mass) {
+    public static PhysicsBody createBody(World world, Vector2 velocity, float x, float y, float radius, float mass, Color color) {
         BodyState initialState = new BodyState(
             new Vector2(x, y),
             velocity,
             radius, 
             mass,
-            Color.WHITE,
+            color,
             UUID.randomUUID()
         );
         Body body = createBox2DBody(world, initialState);

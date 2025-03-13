@@ -23,8 +23,8 @@ public class TrajectoryRenderer {
     private static final float TRAJECTORY_THICKNESS = 2.5f; // Thicker lines for trajectories
     
     // Colors for gradient effect
-    private static final float[] START_COLOR = {1.0f, 1.0f, 0.4f, 0.9f}; // Bright yellow
-    private static final float[] END_COLOR = {1.0f, 0.6f, 0.0f, 0.7f};   // Orange-ish
+    // private static final float[] START_COLOR = {1.0f, 1.0f, 0.4f, 0.9f}; // Bright yellow
+    // private static final float[] END_COLOR = {1.0f, 0.6f, 0.0f, 0.7f};   // Orange-ish
     
     // Prediction mode - determines which system to use
     private PredictionMode currentMode = PredictionMode.HISTORICAL;
