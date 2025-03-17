@@ -1,33 +1,71 @@
 # GravityGame
 
-A [libGDX](https://libgdx.com/) project generated with [gdx-liftoff](https://github.com/libgdx/gdx-liftoff).
+A physics-based sandbox simulator built with [libGDX](https://libgdx.com/), where you can create and interact with celestial bodies in a gravity-driven environment.
 
-This project was generated with a template including simple application launchers and an `ApplicationAdapter` extension that draws libGDX logo.
+## Overview
 
-## Platforms
+GravityGame is a sandbox physics simulator that allows you to create and manipulate planets, stars, and other celestial bodies in a dynamic gravitational environment. The game features a minimalist wireframe aesthetic with a focus on realistic physics simulation and intuitive user interaction.
 
-- `core`: Main module with the application logic shared by all platforms.
-- `lwjgl3`: Primary desktop platform using LWJGL3; was called 'desktop' in older docs.
+## Features
 
-## Gradle
+### Physics Simulation
+- Realistic gravitational interactions between all bodies
+- Scalable to handle as many physics bodies as your system can support
+- Adjustable body properties including size, mass, and velocity
+- Toggle collisions between bodies
+
+### Visualization
+- Path prediction showing future trajectories of all bodies
+- Velocity indicators displaying direction and magnitude
+- Multiple rendering modes (wireframe and solid)
+- Parallax star background providing visual feedback on camera movement
+
+### User Interface
+- Intuitive camera controls (zoom, pan)
+- Body creation workflow with visual feedback
+- Simulation controls (start, pause)
+
+## Platform Support
+
+- `core`: Main module with the application logic shared by all platforms
+- `lwjgl3`: Primary desktop platform using LWJGL3
+
+## Development
+
+GravityGame is developed using:
+- Java with libGDX framework
+- Clean, structured, and maintainable code
+- Dynamic screen resizing for any display
+- Best coding practices for maintainability
+
+## Building and Running
 
 This project uses [Gradle](https://gradle.org/) to manage dependencies.
-The Gradle wrapper was included, so you can run Gradle tasks using `gradlew.bat` or `./gradlew` commands.
-Useful Gradle tasks and flags:
+The Gradle wrapper is included, so you can run Gradle tasks using `gradlew.bat` or `./gradlew` commands.
 
-- `--continue`: when using this flag, errors will not stop the tasks from running.
-- `--daemon`: thanks to this flag, Gradle daemon will be used to run chosen tasks.
-- `--offline`: when using this flag, cached dependency archives will be used.
-- `--refresh-dependencies`: this flag forces validation of all dependencies. Useful for snapshot versions.
-- `build`: builds sources and archives of every project.
-- `cleanEclipse`: removes Eclipse project data.
-- `cleanIdea`: removes IntelliJ project data.
-- `clean`: removes `build` folders, which store compiled classes and built archives.
-- `eclipse`: generates Eclipse project data.
-- `idea`: generates IntelliJ project data.
-- `lwjgl3:jar`: builds application's runnable jar, which can be found at `lwjgl3/build/libs`.
-- `lwjgl3:run`: starts the application.
-- `test`: runs unit tests (if any).
+### Useful Gradle Tasks
 
-Note that most tasks that are not specific to a single project can be run with `name:` prefix, where the `name` should be replaced with the ID of a specific project.
-For example, `core:clean` removes `build` folder only from the `core` project.
+- `lwjgl3:run`: Starts the application
+- `lwjgl3:jar`: Builds application's runnable jar (found at `lwjgl3/build/libs`)
+- `build`: Builds sources and archives of every project
+- `clean`: Removes `build` folders containing compiled classes and built archives
+- `test`: Runs unit tests
+
+### Project-Specific Tasks
+
+Most tasks can be run with a `name:` prefix for specific projects:
+- `core:clean`: Removes `build` folder only from the `core` project
+
+### IDE Support
+
+- `eclipse`: Generates Eclipse project data
+- `idea`: Generates IntelliJ project data
+- `cleanEclipse`: Removes Eclipse project data
+- `cleanIdea`: Removes IntelliJ project data
+
+## Gradle Flags
+
+- `--continue`: Errors will not stop tasks from running
+- `--daemon`: Uses Gradle daemon to run chosen tasks
+- `--offline`: Uses cached dependency archives
+- `--refresh-dependencies`: Forces validation of all dependencies (useful for snapshot versions)
